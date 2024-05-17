@@ -19,6 +19,7 @@ return new class extends Migration
             $table->integer('supplier_id');
             $table->string('product_image')->nullable();
             $table->string('product_store')->nullable();
+            $table->string('sales_count')->nullable();
             $table->string('product_code');
             $table->string('buying_date')->nullable();
             $table->string('expire_date')->nullable();
