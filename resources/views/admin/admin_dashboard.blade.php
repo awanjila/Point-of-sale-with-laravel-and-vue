@@ -310,10 +310,11 @@ $hotProducts = App\Models\Product::where('sales_count', '>', 0)
                                             <h5 class="m-0 fw-normal">{{$product->product_code}}</h5>
                                         </td>
                                         <td>
-                                            <h5 class="m-0 fw-normal">{{$product->category->category_name}}</h5>
+                                        <h5 class="m-0 fw-normal">{{$product->category->category_name ?? 'No Category'}}</h5>
+
                                         </td>
                                         <td>
-                                            <h5 class="m-0 fw-normal">{{$product->supplier->name}}</h5>
+                                            <h5 class="m-0 fw-normal">{{$product->supplier->name ?? 'No Supplier'}}</h5>
                                         </td>
                                         <td>
                                             <h5 class="m-0 fw-normal">{{$product->product_store}}</h5>

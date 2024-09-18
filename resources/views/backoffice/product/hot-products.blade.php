@@ -60,9 +60,9 @@
                                             <td>{{$key+1}}</td>
                                             <td><img src="{{ asset($item->product_image) }}" style="width: 50px; height: 40px;"></td>
                                             <td>{{$item->product_name}}</td>
-                                            <td>{{$item->category->category_name}}</td>
+                                            <td>{{$item->category->category_name ?? 'No Category'}}</td>
                                             <td>{{$item->product_code}}</td>
-                                            <td>{{$item->supplier->name}}</td>
+                                            <td>{{$item->supplier->name ?? 'No Supplier'}}</td>
                                             <td>{{$item->product_store}}</td>
                                             <td>{{$item->sales_count}}</td>
                                             <td>

@@ -60,18 +60,18 @@
                         <span class="badge bg-pink float-end">Hot</span>
                         <a href="{{route('pos')}}">
                             <i class="mdi mdi-view-dashboard-outline"></i>
-                            <span> POS Pharmacy </span>
+                            <span> POS AutoSpare </span>
                         </a>
                     </li>
 {{--                    @endif--}}
 
-                  <!--   <li>
+                    <li>
                         <span class="badge bg-pink float-end">BAR/RES</span>
                         <a href="{{route('pos.restaraunt')}}">
                             <i class="mdi mdi-view-dashboard-outline"></i>
                             <span> POS Restaraunt/Bar </span>
                         </a>
-                    </li> -->
+                    </li>
 
 
 

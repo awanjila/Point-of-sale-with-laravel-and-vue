@@ -59,9 +59,9 @@
                                             <td>{{$key+1}}</td>
                                             <td><img src="{{ asset($item->product_image) }}" style="width: 50px; height: 40px;"></td>
                                             <td>{{$item->product_name}}</td>
-                                            <td>{{$item->category->category_name}}</td>
+                                            <td>{{$item->category->category_name ?? 'N/A'}}</td>
                                             <td>{{$item->product_code}}</td>
-                                            <td>{{$item->supplier->name}}</td>
+                                            <td>{{$item->supplier->name ?? 'N/A'}}</td>
                                             <td>{{$item->selling_price}}</td>
                                             <td>
                                                 @if($item->expire_date >=\Carbon\Carbon::now()->format('Y-m-d'))

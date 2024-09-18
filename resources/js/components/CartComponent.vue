@@ -96,7 +96,6 @@ export default {
 },
 
 
-
 updateCart(item) {
       const rowId = item.rowId;
       const qty = item.qty;
@@ -200,86 +199,83 @@ updateCart(item) {
                     </tbody>
                 </table>
             </div>
+
+
+
+            
             <div class="final-calculation">
-                <table class="table">
-                    <tbody>
-                    <tr class="table-row">
-                        <td>
-                            <table class="table mini-table mb-0">
-                                <tbody>
-                                <tr class="table-row">
-                                    <td>Total Item: <span>{{ cartCount }}</span></td>
-                                    <td></td>
-                                    <td><i class="fa fa-file fa-green" data-toggle="modal" data-target="#typeNoteBox"></i></td>
-                                    <td><input type="" class="form-control" placeholder="Reference no."></td>
-                                </tr>
-                                </tbody>
-                            </table>
-                        </td>
-                        <td>Sub Total</td>
-                        <td>Ksh <span>{{ cartSubtotal }}</span></td>
-                    </tr>
-                   
-                    <tr class="table-row">
-                        <td></td>
-                        <td>Tax</td>
-                        <td>Ksh <span>{{cartTax}}</span></td>
-                    </tr>
-                  
-                    <tr class="table-row">
-                        <td></td>
-                        <td>Total Payable</td>
-                        <td>Ksh <span>{{ cartTotal }}</span></td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="calculator">
-                <div class="displayBox">
-                    <p class="displayText" id="display">0</p>
-                </div>
-                <table>
-                    <tr>
-                        <td><button class="btn clear hvr-back-pulse" id="clear">C</button></td>
-                        <td><button class="btn btn-calc hvr-radial-out" id="sqrt">√</button></td>
-                        <td><button class="btn btn-calc hvr-radial-out hvr-radial-out" id="square">x<sup>2</sup></button></td>
-                        <td><button id="divide" class="btn btn-operation hvr-fade">÷</button></td>
-                    </tr>
-                    <tr>
-                        <td><button class="btn btn-calc hvr-radial-out" id="seven">7</button></td>
-                        <td><button class="btn btn-calc hvr-radial-out" id="eight">8</button></td>
-                        <td><button class="btn btn-calc hvr-radial-out" id="nine">9</button></td>
-                        <td><button id="multiply" class="btn btn-operation hvr-fade">×</button></td>
-                    </tr>
-                    <tr>
-                        <td><button class="btn btn-calc hvr-radial-out" id="four">4</button></td>
-                        <td><button class="btn btn-calc hvr-radial-out" id="five">5</button></td>
-                        <td><button class="btn btn-calc hvr-radial-out" id="six">6</button></td>
-                        <td><button id="subtract" class="btn btn-operation hvr-fade">−</button></td>
-                    </tr>
-                    <tr>
-                        <td><button class="btn btn-calc hvr-radial-out" id="one">1</button></td>
-                        <td><button class="btn btn-calc hvr-radial-out" id="two">2</button></td>
-                        <td><button class="btn btn-calc hvr-radial-out" id="three">3</button></td>
-                        <td><button id="add" class="btn btn-operation hvr-fade">+</button></td>
-                    </tr>
-                    <tr>
-                        <td><button class="btn btn-calc hvr-radial-out" id="zero">0</button></td>
-                        <td><button class="btn btn-calc hvr-radial-out" id="decimal">.</button></td>
-                        <td class="equal"><button id="equals" class="btn btn-operation equals hvr-back-pulse">=</button></td>
-                    </tr>
-                </table>
-            </div>
+  <div class="top-section">
+    <div class="column">
+      <div>Total Items: <span>{{ cartCount }}</span></div>
+    </div>
+    <div class="column">
+      <input type="text" class="reference-input" placeholder="Reference no." />
+    </div>
+    <div class="column">
+      <div>Tax: Ksh <span>{{ cartTax }}</span></div>
+    </div>
+  </div>
+
+  <div class="payable-section">
+    <div>Total Payable</div>
+    <div class="highlighted-total">Ksh {{ cartTotal }}.00</div>
+  </div>
+</div>
+
+            
         </div>
         <div class="bottom-area-btns">
-            <button class="btn btn-1 calculator-btn" type="button"><i class="fa fa-calculator"></i> Calculator</button>
-            <button class="btn btn-green" type="button" data-toggle="modal" data-target="#"><i class="fa fa-keyboard-o"></i> Keyboard</button>
-            <button class="btn btn-3" type="button" data-toggle="modal" data-target="#holdSaleModal"><i class="fa fa-folder-open"></i> Hold Sales</button>
             <button class="btn btn-4" type="button" data-toggle="modal" data-target="#"><i class="fa fa-times-circle"></i> Cancel</button>
-            <button class="btn btn-yellow" type="button" data-toggle="modal" data-target="#holdBox"><i class="fa fa-hand-rock-o"></i> Hold</button>
-            <button class="btn btn-6" type="button" data-toggle="modal" data-target="#paymentModal"><i class="fa fa-credit-card"></i> Payment</button>
+            <button class="btn btn-6" type="button" data-toggle="modal" data-target="#paymentModal"><i class="fa fa-credit-card"></i> Pay Now</button>
             <button class="btn btn-7" type="button" data-toggle="modal" data-target="#holdBox"><i class="fa fa-hand-rock-o"></i> Hold</button>
         </div>
     </div>
 
 </template>
+<style>
+.final-calculation {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center content horizontally */
+  padding: 20px;
+}
+
+.top-section {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.column {
+  flex: 1;
+  text-align: center;
+}
+
+.reference-input {
+  width: 80%;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin: 0 auto;
+}
+
+.payable-section {
+  text-align: center;
+  background-color: #f8f9fa; /* Light background to highlight the total */
+  padding: 10px;
+  border-radius: 8px;
+  width: 100%;
+}
+
+.highlighted-total {
+  font-size: 24px;
+  font-weight: bold;
+  color: #28a745; /* Green color to highlight total */
+  background-color: #e9ffe9; /* Light green background */
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
+</style>
