@@ -20,6 +20,8 @@
         "vue": "^3.2.36"
     },
     "dependencies": {
-        "mitt": "^3.0.0"
+        "mitt": "^3.0.0",
+        "pinia": "^2.2.2",
+        "pinia-plugin-persistedstate": "^4.0.2"
     }
 }
