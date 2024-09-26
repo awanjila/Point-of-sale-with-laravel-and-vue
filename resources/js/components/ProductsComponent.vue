@@ -1,8 +1,7 @@
 <template>
-  <div class="product-area">
-    <!-- Product Grid -->
-    <div class="item-area-box row mx-0">
-      <div class="col-4 px-1" v-for="product in paginatedProducts" :key="product.id">
+  <div>
+    <div class="row mx-0">
+      <div class="col-4 px-1" v-for="product in filteredProducts" :key="product.id">
         <div class="item-box text-center" @click="addToCart(product)">
           <div class="txt-box">
             <span>Ksh {{ product.selling_price }}</span>
@@ -16,27 +15,16 @@
         </div>
       </div>
     </div>
-
-    <!-- Numbered Pagination Section (now below products) -->
-    <nav aria-label="Page navigation" v-if="totalPages > 1">
-      <ul class="pagination justify-content-center">
-        <li class="page-item" v-for="page in totalPages" :key="page" :class="{ active: currentPage === page }">
-          <button class="page-link" @click="goToPage(page)">{{ page }}</button>
-        </li>
-      </ul>
-      <p class="text-center">Page {{ currentPage }} of {{ totalPages }}</p>
-    </nav>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import axios from 'axios';
 import { useCartStore } from './stores/cart';
 
 const products = ref([]);
-const currentPage = ref(1);
-const itemsPerPage = 18; // Define how many items per page
+const selectedCategory = defineProps(['selectedCategory']);
 const cartStore = useCartStore();
 
 const getProducts = async () => {
@@ -44,50 +32,97 @@ const getProducts = async () => {
     const res = await axios.get('/api/pos/products');
     products.value = res.data;
   } catch (error) {
-    console.error('Failed to load products');
+    console.error('Failed to load products:', error);
   }
 };
+
+// Handle case when selectedCategory is null or undefined
+const filteredProducts = computed(() => {
+  if (!selectedCategory || selectedCategory === null) {
+    return products.value; // Return all products when no category is selected
+  }
+  return products.value.filter(product => product.category_id === selectedCategory.id);
+});
 
 onMounted(() => {
   getProducts();
 });
 
-// Computed property for pagination
-const paginatedProducts = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage;
-  const end = currentPage.value * itemsPerPage;
-  return products.value.slice(start, end);
-});
-
-const totalPages = computed(() => Math.ceil(products.value.length / itemsPerPage));
-
-const goToPage = (page) => {
-  currentPage.value = page;
-};
-
-// Add to cart functionality
 const addToCart = (product) => {
   cartStore.addToCart(product);
 };
 </script>
 
+
+
 <style scoped>
-/* Reduce space between product items */
-.item-area-box {
-  display: flex;
-  flex-wrap: wrap;
+/* Lato and Sans-serif fonts */
+body {
+  font-family: 'Lato', sans-serif;
 }
 
-.item-box {
-  margin-bottom: 10px;
-  padding: 10px;
+/* Adjust margins and paddings for rows */
+.row {
+  margin-bottom: 15px;
+}
+
+.btn {
+  font-family: 'Lato', sans-serif;
+  padding: 10px 20px;
+  background-color: #007bff;
+  border: none;
+  color: white;
+}
+
+/* Category Button Styling */
+.category-btn {
   background-color: #fff;
-  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
+  color: #333;
+  text-align: left;
+  padding: 10px;
+  border: 1px solid #ddd;
 }
 
-.img-box img {
+.category-btn:hover {
+  background-color: #f1f1f1;
+}
+
+/* Side Menu Styling on the left */
+.side-menu {
+  position: fixed;
+  top: 0;
+  left: 0; /* Move to the left */
+  width: 450px; /* Increase the width */
+  height: 100%;
+  background-color: #f8f9fa;
+  box-shadow: 2px 0px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+/* Category search area styling */
+.category-search input {
   width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  margin-bottom: 15px;
+}
+
+/* Close button on top of the side menu */
+.close-btn {
+  background-color: #dc3545;
+  color: #fff;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.close-btn:hover {
+  background-color: #c82333;
 }
 
 /* Pagination styling */
@@ -100,3 +135,5 @@ const addToCart = (product) => {
   border-color: #007bff;
 }
 </style>
+
+
