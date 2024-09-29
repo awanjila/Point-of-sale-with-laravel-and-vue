@@ -6,6 +6,7 @@
 
 import './bootstrap';
 import { createApp } from 'vue';
+import '@fortawesome/fontawesome-free/css/all.css';
 
 // Import Pinia and the persistence plugin
 import { createPinia } from 'pinia';

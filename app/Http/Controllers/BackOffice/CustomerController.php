@@ -144,4 +144,42 @@ public function EditCustomer($id){
 
     }//endmethod
 
+
+    public function __invoke(Request $request){
+        return Customer::all();
+        
+            }//endmethod
+
+
+
+            // Store new customer
+    public function store(Request $request)
+    {
+        // Validate the request
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:customers',
+            'phone' => 'required|string|max:15',
+            'address' => 'nullable|string',
+            'location' => 'nullable|string',
+        ]);
+
+        // Create a new customer in the database
+        $customer = Customer::create([
+            'name' => $validatedData['name'],
+            'email' => $validatedData['email'],
+            'phone' => $validatedData['phone'],
+            'address' => $validatedData['address'] ?? null,
+            'location' => $validatedData['location'] ?? null,
+            'photo'=> 'image',
+        ]);
+
+        // Return a success response
+        return response()->json([
+            'message' => 'Customer added successfully',
+            'customer' => $customer
+        ], 201);
+    }//endmethod
 }
+
+
