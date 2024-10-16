@@ -383,7 +383,7 @@ $hotProducts = App\Models\Product::where('sales_count', '>', 0)
                                 <tr>
 
                                     <td>
-                                        <h5 class="m-0 fw-normal">{{$order->customer_name}}</h5>
+                                        <h5 class="m-0 fw-normal">{{$order->customer->name}}</h5>
                                     </td>
                                     <td>
                                         <h5 class="m-0 fw-normal">{{$order->invoice_no}}</h5>

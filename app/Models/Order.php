@@ -11,7 +11,17 @@ class Order extends Model
 
     protected $guarded = [];
 
-    public function customer(){
+    // Define the relationship with OrderDetails
+    public function orderDetails()
+    {
+        return $this->hasMany(OrderDetails::class, 'order_id', 'id');
+    }
+
+    // Define the relationship with Customer (assuming this exists)
+    public function customer()
+    {
         return $this->belongsTo(Customer::class, 'customer_id', 'id');
     }
+
+    // You can add other relationships if needed
 }

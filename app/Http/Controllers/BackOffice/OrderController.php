@@ -11,6 +11,8 @@ use Gloudemans\Shoppingcart\Facades\Cart;
 use Illuminate\Http\Request;
 use DB;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Log;
+
 
 
 class OrderController extends Controller
@@ -223,4 +225,136 @@ class OrderController extends Controller
            return view('backoffice.pages.reports.sales', $this->data);
 
     } //endmethod
+
+
+
+    public function createOrder(Request $request)
+{
+    // Begin Transaction
+    DB::beginTransaction();
+
+    try {
+        // Validate incoming request data
+        $request->validate([
+            'customer_id' => 'required|integer|exists:customers,id',
+            'total_items' => 'required|integer',
+            'total_price' => 'required|numeric',
+            'paying_amount' => 'required|numeric',
+            'cart' => 'required|array',
+            'cart.*.product_id' => 'required|integer|exists:products,id',
+            'cart.*.quantity' => 'required|integer|min:1',
+            'cart.*.unit_cost' => 'required|numeric',
+        ]);
+
+        // Create the order
+        $order = Order::create([
+            'customer_id' => $request->customer_id,
+            'order_date' => now(),
+            'order_status' => 'pending', // Default order status
+            'total_products' => $request->total_items, // Total number of products
+            'sub_total' => $request->total_price, // Subtotal is the total payable
+            'total' => $request->total_payable ?? $request->total_price, // Allow flexibility for future use
+            'vat' => 0, // Default VAT (0 by default, can update in future)
+            'payment_status' => 'pending', // Payment status (can be updated later)
+            'pay' => $request->paying_amount,
+            'due' => $request->total_price - $request->paying_amount, // Calculate due amount
+            'invoice_no' => strtoupper(uniqid('INV')) // Generate a random invoice number
+        ]);
+
+        // Create order details for each product in the cart
+        foreach ($request->cart as $item) {
+            OrderDetails::create([
+                'order_id' => $order->id,
+                'product_id' => $item['product_id'],
+                'quantity' => $item['quantity'],
+                'unit_cost' => $item['unit_cost'],
+                'total' => $item['quantity'] * $item['unit_cost'], // Calculate total cost
+            ]);
+        }
+
+        // Commit the transaction
+        DB::commit();
+
+        // Include invoice_no in the response
+        return response()->json([
+            'success' => true,
+            'message' => 'Order created successfully',
+            'order_id' => $order->id,
+            'invoice_no' => $order->invoice_no, // Include the invoice number here
+        ], 201);
+
+    } catch (\Exception $e) {
+        // Rollback the transaction
+        DB::rollBack();
+
+        // Log the error
+        Log::error('Order creation failed: ' . $e->getMessage());
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Order creation failed: ' . $e->getMessage(),
+        ], 500);
+    }
+}//endmethod
+
+public function getOrderById($id)
+{
+    // Fetch the order with the given ID
+    $order = Order::find($id);
+
+    if (!$order) {
+        return response()->json(['error' => 'Order not found'], 404);
+    }
+
+    // Return the order with the id in the data object
+    return response()->json([
+        'success' => true,
+        'message' => 'Order created successfully',
+        'data' => [ // Wrap the id in a data object
+            'id' => $order->id,
+            // Include other order details if necessary
+        ],
+    ], 201);
+}//endmethod
+
+public function getOrderDetailsById($id)
+{
+    // Fetch the order along with customer and order details (cart items)
+    $order = Order::with('customer', 'orderDetails.product')->find($id);
+
+    if (!$order) {
+        return response()->json(['error' => 'Order not found'], 404);
+    }
+
+    // Return detailed order information including customer and cart details
+    return response()->json([
+        'success' => true,
+        'message' => 'Order details fetched successfully',
+        'data' => [
+            'id' => $order->id,
+            'invoice_no' => $order->invoice_no,
+            'total' => $order->total,
+            'vat' => $order->vat,
+            'customer' => [
+                'name' => $order->customer->name,
+                'email' => $order->customer->email,
+                // Add more customer details as needed
+            ],
+            'order_date' => $order->created_at->format('Y-m-d'),
+            'order_status' => $order->status,
+            'cart' => $order->orderDetails->map(function ($item) {
+                return [
+                    'product_name' => $item->product->product_name, // Fetch product name from the Product relation
+                    'quantity' => $item->quantity,           // Fetch quantity from the OrderDetails table
+                    'unit_cost' => $item->unit_cost,        // Fetch unit price from OrderDetails
+                    'total' => $item->quantity * $item->unit_cost // Calculate total for the item
+                ];
+            }),
+        ]
+    ], 200);
+}//endmethod
+
+
+
+
 }

@@ -1,62 +1,48 @@
-/**
- * First, we will load all of this project's JavaScript dependencies, which
- * includes Vue and other libraries. It is a great starting point when
- * building robust, powerful web applications using Vue and Laravel.
- */
-
-import './bootstrap';
+// Load the project's JavaScript dependencies (Vue and other libraries)
+import './bootstrap';  // Assuming this file loads Axios and other global dependencies
 import { createApp } from 'vue';
-import '@fortawesome/fontawesome-free/css/all.css';
+import '@fortawesome/fontawesome-free/css/all.css';  // FontAwesome icons
+import Toast from 'vue-toastification';
+import 'vue-toastification/dist/index.css'; // Import Toast CSS
 
-// Import Pinia and the persistence plugin
+// Import FontAwesome library and icons
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { faPrint, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+
+// Add FontAwesome icons to the library
+library.add(faPrint, faTimes);
+
+// Import Pinia and the persistence plugin for state management
 import { createPinia } from 'pinia';
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
 
-// Initialize Pinia and use persisted state
+// Initialize Pinia store and apply the persisted state plugin
 const pinia = createPinia();
 pinia.use(piniaPluginPersistedstate);
-
-/**
- * Next, we will create a fresh Vue application instance. You may then begin
- * registering components with the application instance so they are ready
- * to use in your application's views. An example is included for you.
- */
 
 // Import Vue components
 import Products from './components/ProductsComponent.vue';
 import Cart from './components/CartComponent.vue';
-import PosDashboard from './components/PosDashboard.vue'
+import PosDashboard from './components/PosDashboard.vue';
 
-// Create Vue app and register components
+// Create the Vue application instance
 const app = createApp({
-    components: {
-        Products,
-        Cart,  // Corrected component name (Carts -> Cart)
-        PosDashboard,
-    }
+  components: {
+    Products,  // Registers the Products component
+    Cart,      // Registers the Cart component
+    PosDashboard,  // Registers the PosDashboard component
+  }
 });
 
-// Use Pinia as the store in your Vue app
+// Register FontAwesomeIcon component globally
+app.component('font-awesome-icon', FontAwesomeIcon);
+
+// Use Pinia store with Vue app
 app.use(pinia);
 
-/**
- * The following block of code may be used to automatically register your
- * Vue components. It will recursively scan this directory for the Vue
- * components and automatically register them with their "basename".
- *
- * Eg. ./components/ExampleComponent.vue -> <example-component></example-component>
- */
+// Use Toast plugin with Vue app
+app.use(Toast);
 
-// Uncomment if you want auto-registration for components
-// Object.entries(import.meta.glob('./**/*.vue', { eager: true })).forEach(([path, definition]) => {
-//     app.component(path.split('/').pop().replace(/\.\w+$/, ''), definition.default);
-// });
-
-/**
- * Finally, we will attach the application instance to a HTML element with
- * an "id" attribute of "app". This element is included with the "auth"
- * scaffolding. Otherwise, you will need to add an element yourself.
- */
-
-// Mount the Vue application
+// Mount the Vue app to the element with ID "app"
 app.mount('#app');

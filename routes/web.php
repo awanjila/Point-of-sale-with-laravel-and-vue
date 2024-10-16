@@ -214,8 +214,8 @@ Route::controller(ExpenseController::class)->group(function(){
 
 //All POS Route
 Route::controller(POSController::class)->group(function(){
-    Route::get('pos', 'POS')->name('pos');
-    Route::get('pos/restaraunt', 'POSRestaraunt')->name('pos.restaraunt');
+    Route::get('posv1', 'POS')->name('pos');
+    Route::get('pos', 'POSRestaraunt')->name('pos.restaraunt');
     Route::post('/add-cart', 'AddCart')->name('add.to.cart');
     Route::get('/All-Pos-Item', 'AllPosItem')->name('all.pos.item');
     Route::post('update/pos', 'UpdatePOS')->name('pos.update');

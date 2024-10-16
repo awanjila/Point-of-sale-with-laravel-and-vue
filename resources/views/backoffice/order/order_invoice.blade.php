@@ -116,7 +116,10 @@
         <div>
             <div align="right" >
 {{--                <p><strong>Subtotal: </span>KES {{$order->sub_total}}</strong></p>--}}
-{{--                <h4>Tax: </span>KES {{$order->vat}}</h4>--}}
+{{--                <h4>Tax: </span>KES {{$o@php
+    $id= Auth::user()->id;
+$data= \App\Models\User::find($id);
+@endphprder->vat}}</h4>--}}
                 <p><strong>Total: </span>{{$order->total}}</strong> </p>
                 {{-- <h2><span style="color: green;">Full Payment PAID</h2> --}}
             </div>
@@ -125,10 +128,7 @@
     <div class="thanks mt-3">
         <p>Thanks For Buying Our Products..!!</p>
     </div>
-@php
-    $id= Auth::user()->id;
-$data= \App\Models\User::find($id);
-@endphp
+
     <div class="authority float-right mt-5 text-center" >
         <h5>You Were Served by: {{$data->name}}</h5><hr>
         <h3>Pay Bill: 522533 <br> Account No: 7587651 </h3>

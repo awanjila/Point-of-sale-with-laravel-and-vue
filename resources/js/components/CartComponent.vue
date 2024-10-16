@@ -1,433 +1,279 @@
 <template>
-  <div class="cart-area">
-    <!-- First Row: Logo on the left, Link icons on the right -->
-    <div class="header-row">
-      <div class="logo">
-        <img src="/assets/images/logo-dark.png" alt="Shop Logo" />
-      </div>
-      <div class="link-icons">
-        <a href="/dashboard" class="icon-link">
-          <i class="fas fa-home"></i>
-        </a>
-        <a href="/sales-report" class="icon-link">
-          <i class="fas fa-receipt"></i>
-        </a>
-        <a href="/current-user" class="icon-link">
-          <i class="fas fa-user"></i>
-        </a>
-      </div>
-    </div>
-
-    <!-- Customer Form Modal -->
-    <CustomerForm
-      :showModal="showCustomerForm"
-      @closeModal="closeCustomerModal"
-      @customerAdded="fetchCustomers"
-    />
-
-    <!-- Second Row: Select Customer and Add User -->
-    <div class="customer-row">
-      <!-- Toggleable Search Input -->
-      <button class="toggle-search-btn" @click="toggleSearchInput">
-        <i class="fas fa-search"></i>
-      </button>
+  <div class="cart-container">
+    <!-- Customer Dropdown with Search -->
+    <div class="customer-search">
       <input
-        v-if="searchInputVisible"
         type="text"
-        v-model="searchQuery"
-        placeholder="Search Customers"
-        class="customer-search"
+        v-model="customerSearch"
+        placeholder="Search customers..."
+        class="form-control"
       />
-      <select class="customer-select">
-        <option value="" disabled selected>Select a Customer</option>
-        <option v-for="customer in filteredCustomers" :key="customer.id">
+
+      <!-- Customer Dropdown -->
+      <select v-model="activeCustomer" class="form-select">
+        <option 
+          v-for="customer in filteredCustomers" 
+          :key="customer.id" 
+          :value="customer"
+        >
           {{ customer.name }}
         </option>
       </select>
-      <button class="add-user-btn" @click="showCustomerForm = true">
-        <i class="fas fa-user-plus"></i>
-      </button>
+
+      <!-- Display Selected Customer -->
+      <!-- <div v-if="activeCustomer">
+        <h4>Selected Customer: {{ activeCustomer.name }}</h4>
+      </div> -->
     </div>
 
-    <!-- Cart Table Section -->
-    <div class="cart-table-section">
-  <div class="cart-table-container">
-    <div class="table-wrapper">
-      <!-- Add v-if on table -->
-      <table v-if="cart.length" class="table">
+    <!-- Cart Items Table -->
+    <div class="cart-items-container">
+      <table class="table cart-items">
         <thead>
           <tr>
-            <th>Item</th>
-            <th>Price</th>
+            <th>Product Name</th>
             <th>Quantity</th>
-            <th>Subtotal</th>
+            <th>Price</th>
             <th>Action</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="item in cart" :key="item.id">
+          <tr
+            v-for="item in cart"
+            :key="item.id"
+          >
             <td>{{ item.product_name }}</td>
+            <td>{{ item.quantity }}</td>
             <td>Ksh {{ item.selling_price }}</td>
             <td>
-              <div class="qty-controls">
-                <button class="qty-btn" @click="decreaseQty(item)">-</button>
-                <span>{{ item.quantity }}</span>
-                <button class="qty-btn" @click="increaseQty(item)">+</button>
-              </div>
-            </td>
-            <td>Ksh {{ item.selling_price * item.quantity }}</td>
-            <td>
-              <button class="remove-btn" @click="removeFromCart(item.id)">X</button>
+              <button @click="removeItem(item.id)" class="btn no-bg-btn">
+                <i class="fas fa-trash"></i> <!-- Red bin icon -->
+              </button>
             </td>
           </tr>
         </tbody>
       </table>
-
-      <!-- Ensure v-else directly follows v-if -->
-      <div v-else class="empty-cart">
-        <h2>Your Cart Is Empty</h2>
-        <button class="shop-btn">Shop Now</button>
-      </div>
     </div>
-  </div>
-</div>
-
 
     <!-- Cart Summary -->
-    <div class="cart-summary">
-      <div class="cart-total-products">
-        <strong>Total Products: {{ totalProducts }}</strong>
-      </div>
-      <div class="cart-total">
-        <strong>Total Payable: Ksh {{ cartTotal }}</strong>
+    <div class="cart-summary-container">
+      <div class="cart-summary">
+        <p>Total Items: {{ totalItems }}</p>
+        <p class="total-price">Total Price: Ksh {{ totalPrice }}</p>
       </div>
     </div>
 
-    <!-- Cart Actions -->
-    <div class="cart-actions">
-      <button class="btn action-btn reset-btn" @click="resetCart">Reset</button>
-      <button
-        class="btn action-btn pay-btn"
-        :disabled="!cart.length"
-        @click="showPaymentForm = true"
-      >
-        Pay Now
-      </button>
-      <button class="btn action-btn draft-btn">Save as Draft</button>
+    <!-- Button Container -->
+    <div class="button-container">
+      <button @click="resetCart" class="btn btn-warning">Reset</button>
+      <button @click="openPaymentModal" class="btn btn-success">Pay Now</button>
+      <button @click="holdDraft" class="btn btn-info">Hold Draft</button>
     </div>
 
-    <!-- Payment Form Modal -->
-    <PaymentForm v-if="showPaymentForm" :cartTotal="cartTotal" @close="closePaymentForm" />
+    
+    <!-- Payment Modal -->
+<!-- Pass the customer, total items, and total price to PaymentForm -->
+<PaymentForm 
+  :showModal="isPaymentModalOpen" 
+  @closeModal="isPaymentModalOpen = false"
+  :activeCustomer="activeCustomer"
+  :totalItems="totalItems"
+  :totalPrice="totalPrice"
+  :userData="userData"
+/>
+    
   </div>
 </template>
 
-
-
 <script setup>
-import CustomerForm from './CustomerForm.vue';
-import { computed, ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
-import { useCartStore } from './stores/cart';
+import { useCartStore } from './stores/cart'; // Cart store import
+import PaymentForm from './PaymentForm.vue'; // Import the PaymentForm component
 
-const showCustomerForm = ref(false);
-const searchInputVisible = ref(false);
-const searchQuery = ref('');
-const customers = ref([]);
+defineProps({
+  userData: {
+    type: Object,
+    required: true,
+  },
+});
+
+// ----- Cart State and Logic -----
 const cartStore = useCartStore();
+const isPaymentModalOpen = ref(false); // Modal visibility
+
+// Cart data
 const cart = computed(() => cartStore.cart);
-
-const cartTotal = computed(() =>
-  cartStore.cart.reduce(
-    (total, item) => total + item.selling_price * item.quantity,
-    0
-  )
+const totalItems = computed(() =>
+  cart.value.reduce((total, item) => total + item.quantity, 0)
+);
+const totalPrice = computed(() =>
+  cart.value.reduce((total, item) => total + item.selling_price * item.quantity, 0)
 );
 
-// Computed property for total products
-const totalProducts = computed(() =>
-  cartStore.cart.reduce((total, item) => total + item.quantity, 0)
-);
+// Remove item from cart
+const removeItem = (itemId) => {
+  cartStore.removeFromCart(itemId);
+};
 
+// Reset cart
+const resetCart = () => {
+  cartStore.clearCart();
+};
+
+
+// Pay Now Button Functionality
+const openPaymentModal = () => {
+  isPaymentModalOpen.value = true; // Show the payment modal
+};
+
+// Hold Draft Functionality
+const holdDraft = () => {
+  alert("Draft has been held.");
+};
+
+// ----- Customer Search and Selection -----
+const customerSearch = ref(''); // Search query for customers
+const customers = ref([]); // List of customers
+const activeCustomer = ref(null); // Currently active customer
+
+// Fetch customers from API
 const fetchCustomers = async () => {
   try {
     const response = await axios.get('/api/pos/customers');
     customers.value = response.data;
+
+    // Set the first customer as active by default
+    if (customers.value.length > 0) {
+      activeCustomer.value = customers.value[0];
+    }
   } catch (error) {
-    console.error('Error fetching customers:', error);
+    console.error('Failed to load customers:', error);
   }
 };
 
+// Filter customers based on search input
+const filteredCustomers = computed(() => {
+  if (!customerSearch.value) return customers.value;
+  return customers.value.filter((customer) =>
+    customer.name.toLowerCase().includes(customerSearch.value.toLowerCase())
+  );
+});
+
+// Fetch customers on component mount
 onMounted(() => {
   fetchCustomers();
 });
-
-const closeCustomerModal = () => {
-  showCustomerForm.value = false;
-};
-
-const removeFromCart = (id) => {
-  cartStore.removeFromCart(id);
-};
-
-const increaseQty = (item) => {
-  cartStore.updateQuantity(item.id, item.quantity + 1);
-};
-
-const decreaseQty = (item) => {
-  if (item.quantity > 1) {
-    cartStore.updateQuantity(item.id, item.quantity - 1);
-  }
-};
-
-const resetCart = () => {
-  cartStore.resetCart();
-};
-
-// Toggle Search Input visibility
-const toggleSearchInput = () => {
-  searchInputVisible.value = !searchInputVisible.value;
-};
-
-// Computed property for filtered customers
-const filteredCustomers = computed(() =>
-  customers.value.filter((customer) =>
-    customer.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-  )
-);
 </script>
 
-
-
 <style scoped>
-/* Responsive Styling */
-@media (max-width: 768px) {
-  .cart-table-container {
-    padding: 0;
-  }
-
-  .cart-summary, .cart-actions {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .table-wrapper {
-    overflow-x: auto;
-  }
-}
-
-/* Cart Table Section */
-.cart-table-section {
-  margin-top: 20px;
-}
-
-.cart-table-container {
-  max-height: 400px;
-  overflow-y: auto;
-  margin-bottom: 20px;
-}
-
-.table-wrapper {
-  overflow-x: auto;
-  width: 100%;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.table th,
-.table td {
-  padding: 10px;
-  border-bottom: 1px solid #ccc;
-}
-
-.qty-controls {
+/* General Cart Layout */
+.cart-container {
   display: flex;
-  gap: 5px;
+  flex-direction: column;
+  height: 100vh;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.qty-btn {
-  background-color: #f0f0f0;
-  border: none;
-  padding: 5px 10px;
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-.remove-btn {
-  background-color: red;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.cart-summary {
-  margin-bottom: 20px;
-}
-
-/* Empty Cart Section */
-.empty-cart {
-  text-align: center;
-}
-
-.shop-btn {
-  padding: 10px 20px;
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-top: 10px;
-}
-
-.shop-btn:hover {
-  opacity: 0.9;
-}
-
-/* Cart Actions styling */
-.cart-actions {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 20px;
-}
-
-.action-btn {
-  padding: 15px 30px;
-  font-size: 1rem;
-  font-weight: bold;
-  cursor: pointer;
-  border: none;
-  transition: all 0.3s ease;
-  position: relative;
-  z-index: 1;
-  background-color: #c02323; /* Default red background */
-  color: white;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  background-image: linear-gradient(to top, #c02323, #ff4d4d); /* Shiny effect */
-}
-
-.reset-btn {
-  border-top-left-radius: 30px;
-  border-bottom-left-radius: 30px;
-}
-
-.pay-btn {
-  border-radius: 0; /* No rounded corners for middle button */
-}
-
-.draft-btn {
-  border-top-right-radius: 30px;
-  border-bottom-right-radius: 30px;
-}
-
-/* Shiny effect for buttons */
-.action-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.3);
-  z-index: -1;
-  opacity: 0;
-  border-radius: inherit;
-  transition: opacity 0.3s ease;
-}
-
-.action-btn:hover::before {
-  opacity: 1;
-}
-
-.action-btn:hover {
-  background-color: #000;
-}
-
-.action-btn:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-/* Shiny/glossy effect */
-.action-btn {
-  background: linear-gradient(145deg, #e63946, #f76c6c);
-  border: none;
-  color: white;
-}
-
-.action-btn:hover {
-  background: linear-gradient(145deg, #000000, #343434); /* Black when hovered */
-}
-
-/* Customer Row */
-.customer-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.toggle-search-btn {
-  background-color: transparent;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: #3498db;
-}
-
-.toggle-search-btn:hover {
-  opacity: 0.7;
-}
-
+/* Customer search area */
 .customer-search {
+  margin-bottom: 10px;
+}
+
+/* Cart Items Container */
+.cart-items-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  background-color: #fff;
   padding: 10px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  flex: 1;
-  transition: all 0.3s ease-in-out;
+  border-radius: 8px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 10px;
+  max-height: calc(90vh - 250px); /* Ensure the container doesn't push down the cart summary and buttons */
 }
 
-.customer-select {
-  padding: 10px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  flex: 1;
+.cart-items {
+  width: 100%;
+  table-layout: fixed;
 }
 
-.add-user-btn {
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 5px;
-  cursor: pointer;
+/* Cart item size adjustment */
+.cart-items th,
+.cart-items td {
+  padding: 5px 10px;
+  font-size: 14px;
 }
 
-/* Styling for the header-row */
-.header-row {
+/* Cart Summary */
+.cart-summary-container {
+  padding: 15px;
+  background-color: #f0f8ff;
+  border-radius: 8px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 10px;
+}
+
+.cart-summary p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.total-price {
+  font-size: 22px;
+  color: #28a745;
+  font-weight: bold;
+}
+
+/* Button container with fixed positioning */
+.button-container {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  background-color: #f7f7f7;
-  border-bottom: 1px solid #ccc;
+  padding: 10px 0;
+  background-color: #f8f9fa;
+  border-top: 1px solid #ddd;
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
 }
 
-.header-row .logo img {
-  height: 50px;
+/* Button styles */
+.btn {
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 16px;
+  color: white;
+  flex: 1;
+  margin: 0 5px;
 }
 
-.header-row .link-icons a {
-  margin-left: 15px;
-  font-size: 1.5rem;
-  color: #333;
+.btn-warning {
+  background-color: #ffc107;
 }
 
-.header-row .link-icons a:hover {
-  color: #c02323;
+.btn-success {
+  background-color: #28a745;
+}
+
+.btn-info {
+  background-color: #17a2b8;
+}
+
+.no-bg-btn {
+  background: none;
+  border: none;
+  color: #dc3545; /* Red color for bin icon */
+  cursor: pointer;
+  padding: 0;
+  font-size: 16px;
+}
+
+/* Styling for Font Awesome icons */
+.no-bg-btn i {
+  margin-right: 0;
+  font-size: 18px;
 }
 </style>

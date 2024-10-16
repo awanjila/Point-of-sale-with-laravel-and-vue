@@ -1,180 +1,236 @@
 <template>
-  <div class="cart-area">
-    <!-- First Row: Logo on the left, Link icons on the right -->
-    <div class="header-row">
-      <div class="logo">
-        <img src="/path-to-logo/logo.png" alt="Shop Logo" />
-      </div>
-      <div class="link-icons">
-        <a href="/dashboard" class="icon-link">
-          <i class="fas fa-home"></i>
-        </a>
-        <a href="/sales-report" class="icon-link">
-          <i class="fas fa-receipt"></i>
-        </a>
-        <a href="/current-user" class="icon-link">
-          <i class="fas fa-user"></i>
-        </a>
-      </div>
-    </div>
+  <ModalWrapper :show="showModal" @close="closeModal">
+    <div class="payment-modal">
+      <template v-if="!showReceipt">
+        <h2 class="modal-title">Payment Form</h2>
 
-    <!-- Customer Form Modal -->
-    <CustomerForm
-      :showModal="showCustomerForm"
-      @closeModal="closeCustomerModal"
-      @customerAdded="fetchCustomers"
-    />
+        <!-- Display customer name and order details -->
+        <div class="payment-details">
+          <p class="customer-name">{{ activeCustomer.name }}</p>
+          <p class="order-amount">Order Amount: Ksh {{ totalPrice }}</p>
+          <p><strong>Number of Products:</strong> {{ totalItems }}</p>
+        </div>
 
-    <!-- Second Row: Select Customer and Add User -->
-    <div class="customer-row">
-      <!-- Search Input -->
-      <input
-        type="text"
-        v-model="searchQuery"
-        placeholder="Search Customers"
-        class="customer-search"
+        <!-- Payment form -->
+        <div class="form-columns">
+          <div class="form-left">
+            <div class="form-group">
+              <label for="receivedAmount">Received Amount:</label>
+              <input
+                type="number"
+                v-model="receivedAmount"
+                id="receivedAmount"
+                class="form-control"
+                placeholder="Enter received amount"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="changeReturn">Change Return:</label>
+              <p class="form-control-static">{{ changeReturn }}</p>
+            </div>
+          </div>
+
+          <div class="form-right">
+            <div class="form-group">
+              <label for="paymentChoice">Payment Method:</label>
+              <select v-model="paymentChoice" id="paymentChoice" class="form-control">
+                <option value="cash">Cash</option>
+                <option value="mpesa">M-Pesa</option>
+                <option value="card">Card</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group full-width">
+          <label for="paymentNotes">Payment Notes:</label>
+          <textarea v-model="paymentNotes" id="paymentNotes" class="form-control payment-notes"></textarea>
+        </div>
+
+        <button @click="submitPayment" class="btn btn-primary" :disabled="loading">
+          <span v-if="loading">Processing...</span>
+          <span v-else>Submit Order</span>
+        </button>
+      </template>
+
+      <!-- Display the receipt after payment -->
+      <ReceiptPrint 
+        v-if="showReceipt" 
+        :orderId="orderId"  
+        :customer="activeCustomer"
+        :cart="cart"
+        :totalPrice="totalPrice"
+        :paymentChoice="paymentChoice"
+        @close="closeReceipt"
       />
-      <select class="customer-select">
-        <option v-for="customer in filteredCustomers" :key="customer.id">
-          {{ customer.name }}
-        </option>
-      </select>
-      <button class="add-user-btn" @click="showCustomerForm = true">
-        <i class="fas fa-user-plus"></i>
-      </button>
     </div>
-
-    <!-- Scrollable Cart Area -->
-    <div class="cart-table-container">
-      <table v-if="cart.length" class="table">
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th>Price</th>
-            <th>Quantity</th>
-            <th>Subtotal</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in cart" :key="item.id">
-            <td>{{ item.product_name }}</td>
-            <td>Ksh {{ item.selling_price }}</td>
-            <td>
-              <div class="qty-controls">
-                <button class="qty-btn" @click="decreaseQty(item)">-</button>
-                <span>{{ item.quantity }}</span>
-                <button class="qty-btn" @click="increaseQty(item)">+</button>
-              </div>
-            </td>
-            <td>Ksh {{ item.selling_price * item.quantity }}</td>
-            <td>
-              <button class="remove-btn" @click="removeFromCart(item.id)">X</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div v-else>
-        <h2>Your Cart Is Empty</h2>
-      </div>
-    </div>
-
-    <!-- Cart Summary -->
-    <div class="cart-summary">
-      <!-- Total Products -->
-      <div class="cart-total-products">
-        <strong>Total Products: {{ totalProducts }}</strong>
-      </div>
-
-      <!-- Total Payable -->
-      <div class="cart-total">
-        <strong>Total Payable: Ksh {{ cartTotal }}</strong>
-      </div>
-    </div>
-
-    <!-- Cart Actions -->
-    <div class="cart-actions">
-      <button class="btn action-btn reset-btn" @click="resetCart">Reset</button>
-      <button
-        class="btn action-btn pay-btn"
-        :disabled="!cart.length"
-        @click="showPaymentForm = true"
-      >
-        Pay Now
-      </button>
-      <button class="btn action-btn draft-btn">Save as Draft</button>
-    </div>
-
-    <!-- Payment Form Modal -->
-    <PaymentForm v-if="showPaymentForm" :cartTotal="cartTotal" @close="closePaymentForm" />
-  </div>
+  </ModalWrapper>
 </template>
 
+<script>
+import ModalWrapper from '@/components/ModalWrapper.vue';
+import { useCartStore } from './stores/cart';
+import axios from 'axios';
+import { useToast } from 'vue-toastification';
+import ReceiptPrint from '@/components/ReceiptPrint.vue';
 
-<script setup>
-import { ref } from 'vue';
+export default {
+  props: {
+    showModal: Boolean,
+    activeCustomer: Object,
+    totalItems: Number,
+    totalPrice: Number,
+  },
+  components: {
+    ModalWrapper,
+    ReceiptPrint,
+  },
+  data() {
+    return {
+      receivedAmount: this.totalPrice,
+      paymentChoice: 'cash',
+      paymentNotes: '',
+      loading: false,
+      showReceipt: false,
+      orderId: '',
+      changeReturn: 0.00,
+      cart: [],
+    };
+  },
+  methods: {
+    closeModal() {
+      this.$emit('closeModal');
+      this.resetForm();
+    },
+    async submitPayment() {
+      const toast = useToast();
+      const cartStore = useCartStore();
+      this.cart = cartStore.cart; // Update cart data
 
-const receivedPayment = ref('');
-const payingAmount = ref('');
-const changeToReturn = ref('');
-const paymentMethod = ref('cash');
-const salesNotes = ref('');
+      if (!this.cart || this.cart.length === 0) {
+        toast.error('Your cart is empty. Please add items to the cart before submitting.');
+        return;
+      }
+
+      const payload = {
+        customer_id: this.activeCustomer.id,
+        total_items: this.totalItems,
+        total_price: this.totalPrice,
+        paying_amount: this.receivedAmount,
+        cart: this.cart.map(item => ({
+          product_id: item.id,
+          quantity: item.quantity,
+          unit_cost: item.selling_price,
+          total: (item.selling_price * item.quantity).toFixed(2),
+        })),
+      };
+
+      this.loading = true;
+
+      try {
+        const response = await axios.post('/api/orders', payload);
+        toast.success('Order submitted successfully!');
+
+        if (response.data && response.data.order_id) {
+          this.orderId = response.data.order_id;
+          this.showReceipt = true; // Show the receipt and hide the payment form
+        } else {
+          toast.error('Order ID missing from response.');
+        }
+      } catch (error) {
+        toast.error('Error submitting your payment. Please try again.');
+      } finally {
+        this.loading = false;
+      }
+    },
+    closeReceipt() {
+      this.showReceipt = false;
+      this.resetForm(); // Optionally reset the form when closing the receipt
+    },
+    resetForm() {
+      this.receivedAmount = this.totalPrice;
+      this.paymentChoice = 'cash';
+      this.paymentNotes = '';
+      this.changeReturn = 0.00;
+    },
+  },
+  watch: {
+    receivedAmount(newVal) {
+      this.changeReturn = (newVal - this.totalPrice).toFixed(2);
+    },
+  },
+};
 </script>
 
 <style scoped>
-.payment-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
+.payment-modal {
+  font-family: 'Lato', sans-serif;
+  padding: 20px;
+  max-width: 500px;
   width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  margin: 0 auto;
+}
+
+.modal-wrapper {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000; /* Make sure it's on top */
+  padding: 20px;
 }
 
-.payment-form {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  max-width: 600px;
-  width: 100%;
+.form-columns {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 20px;
 }
 
-.payment-column {
+@media(min-width: 768px) {
+  .form-columns {
+    flex-direction: row;
+  }
+}
+
+.payment-notes {
+  height: 100px;
+  resize: vertical;
+}
+
+.form-left,
+.form-right {
   flex: 1;
 }
 
-.payment-input {
-  margin-bottom: 20px;
+.full-width {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.form-group {
+  margin-bottom: 15px;
 }
 
 .form-control {
   width: 100%;
   padding: 10px;
-  font-size: 1rem;
   border: 1px solid #ccc;
-  border-radius: 5px;
+  border-radius: 4px;
 }
 
-.submit-btn {
-  width: 100%;
-  padding: 12px;
-  font-size: 1rem;
-  background-color: #4caf50;
+.btn-primary {
+  background-color: #c02323;
   color: white;
+  padding: 10px;
   border: none;
-  border-radius: 5px;
+  border-radius: 4px;
   cursor: pointer;
+  width: 100%;
+  margin-top: 20px;
 }
 
-.submit-btn:disabled {
-  background-color: #ccc;
+.btn-primary:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
 }
 </style>

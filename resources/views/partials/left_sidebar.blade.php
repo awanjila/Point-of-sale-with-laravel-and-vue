@@ -2,43 +2,6 @@
 
         <div class="h-100" data-simplebar>
 
-            <!-- User box -->
-            <div class="user-box text-center">
-                <img src="assets/images/users/user-1.jpg" alt="user-img" title="Mat Helme"
-                     class="rounded-circle avatar-md">
-                <div class="dropdown">
-                    <a href="javascript: void(0);" class="text-dark dropdown-toggle h5 mt-2 mb-1 d-block"
-                       data-bs-toggle="dropdown">Geneva Kennedy</a>
-                    <div class="dropdown-menu user-pro-dropdown">
-
-                        <!-- item-->
-                        <a href="javascript:void(0);" class="dropdown-item notify-item">
-                            <i class="fe-user me-1"></i>
-                            <span>My Account</span>
-                        </a>
-
-                        <!-- item-->
-                        <a href="javascript:void(0);" class="dropdown-item notify-item">
-                            <i class="fe-settings me-1"></i>
-                            <span>Settings</span>
-                        </a>
-
-                        <!-- item-->
-                        <a href="javascript:void(0);" class="dropdown-item notify-item">
-                            <i class="fe-lock me-1"></i>
-                            <span>Lock Screen</span>
-                        </a>
-
-                        <!-- item-->
-                        <a href="javascript:void(0);" class="dropdown-item notify-item">
-                            <i class="fe-log-out me-1"></i>
-                            <span>Logout</span>
-                        </a>
-
-                    </div>
-                </div>
-                <p class="text-muted">Admin Head</p>
-            </div>
 
             <!--- Sidemenu -->
             <div id="sidebar-menu">
@@ -56,22 +19,18 @@
 
 
 {{--    @if(Auth::user()->can('pos.menu'))--}}
-                    <li>
-                        <span class="badge bg-pink float-end">Hot</span>
-                        <a href="{{route('pos')}}">
-                            <i class="mdi mdi-view-dashboard-outline"></i>
-                            <span> POS AutoSpare </span>
-                        </a>
-                    </li>
 {{--                    @endif--}}
 
-                    <li>
-                        <span class="badge bg-pink float-end">BAR/RES</span>
-                        <a href="{{route('pos.restaraunt')}}">
-                            <i class="mdi mdi-view-dashboard-outline"></i>
-                            <span> POS Restaraunt/Bar </span>
-                        </a>
-                    </li>
+<li>
+    <form action="{{ route('pos.restaraunt') }}" method="get">
+        <button type="submit" class="btn btn-primary w-100 d-flex align-items-center justify-content-between">
+            <i class="mdi mdi-view-dashboard-outline"></i>
+            <span> Point Of Sale </span>
+            <span class="badge bg-pink">New</span>
+        </button>
+    </form>
+</li>
+
 
 
 
