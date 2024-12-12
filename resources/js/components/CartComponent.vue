@@ -254,8 +254,9 @@ const decreaseQuantity = (item) => {
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
   margin-bottom: 5px;
   overflow-y: auto;
-  max-height: calc(100vh - 420px); /* Adjusted to show ~10 items */
+  max-height: calc(6 * 45px); /* Adjust the height according to your row size, 5 rows should be fully visible */
 }
+
 
 .cart-items {
   width: 100%;
