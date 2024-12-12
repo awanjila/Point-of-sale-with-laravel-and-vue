@@ -77,6 +77,7 @@
 import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
 import { useCartStore } from './stores/cart';
+import toastr from 'toastr';
 
 // Search query reactive variable
 const searchQuery = ref('');
@@ -95,6 +96,9 @@ const cartStore = useCartStore();
 // Pagination state
 const currentPage = ref(1);
 const itemsPerPage = ref(20); // Adjust the number of items per page
+
+// Add sound effect
+const addToCartSound = new Audio('/assets/sound/ding-80828.mp3'); // Add your sound file path
 
 // Fetch Products from API
 const getProducts = async () => {
@@ -143,6 +147,19 @@ const goToPage = (page) => {
 // Add product to cart
 const addToCart = (product) => {
   cartStore.addToCart(product);
+  
+  // Play sound
+  addToCartSound.currentTime = 0; // Reset sound to start
+  addToCartSound.play()
+    .catch(error => console.log('Error playing sound:', error)); // Handle any playback errors
+  
+  // Show toastr message
+  toastr.success(`${product.product_name} added to cart`, 'Success', {
+    timeOut: 2000,
+    closeButton: true,
+    progressBar: true,
+    positionClass: 'toast-bottom-right'
+  });
 };
 
 // Apply background color based on stock levels
@@ -225,7 +242,7 @@ onMounted(() => {
   text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
   padding: 5px;
 }
 
@@ -235,7 +252,7 @@ onMounted(() => {
 }
 
 .product-name-container {
-  height: 40px;
+  height: 35px;
 }
 
 .product-name {

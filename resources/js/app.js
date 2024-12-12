@@ -16,6 +16,7 @@ library.add(faPrint, faTimes);
 // Import Pinia and the persistence plugin for state management
 import { createPinia } from 'pinia';
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
+import 'toastr/build/toastr.min.css';
 
 // Initialize Pinia store and apply the persisted state plugin
 const pinia = createPinia();
