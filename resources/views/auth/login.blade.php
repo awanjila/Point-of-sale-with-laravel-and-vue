@@ -6,7 +6,7 @@
     <title>Login </title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta content="A fully featured admin theme which can be used to build CRM, CMS, etc." name="description" />
-    <meta content="Coderthemes" name="author" />
+    <meta content="Wabe Point" name="author" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <!-- App favicon -->
     <link rel="shortcut icon" href="{{ asset('assets/images/favicon.ico') }}">
@@ -28,7 +28,46 @@
 <div class="account-pages mt-5 mb-5">
     <div class="container">
         <div class="row justify-content-center">
-            <div class="col-md-8 col-lg-6 col-xl-4">
+            <!-- Left Section for Role Selection -->
+            <div class="col-md-4 col-lg-4">
+                <div class="card bg-pattern">
+                    <div class="card-body p-4">
+                        <div class="text-center mb-4">
+                            <h4 class="text-dark-50 text-center mt-0 fw-bold">Select Role</h4>
+                        </div>
+
+                        <div class="d-grid gap-3">
+                            <button class="btn btn-lg btn-primary" onclick="setRole('admin')">
+                                <i class="fas fa-user-shield me-2"></i>Admin Login
+                            </button>
+                            <button class="btn btn-lg btn-info" onclick="setRole('server')">
+                                <i class="fas fa-user-tie me-2"></i>Server Login
+                            </button>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <p class="text-muted">Currently selected: <span id="selectedRole" class="fw-bold">None</span></p>
+                        </div>
+
+                        <div id="adminCredentials" class="credentials-info mt-4" style="display: none;">
+                            <div class="alert alert-info" role="alert">
+                                <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Admin Access</h5>
+                                <p class="mb-0">Please use the username <strong>abemuchikan@gmail.com</strong> and the password <strong>W@njiras870</strong> to access all the features.</p>
+                            </div>
+                        </div>
+
+                        <div id="serverCredentials" class="credentials-info mt-4" style="display: none;">
+                            <div class="alert alert-info" role="alert">
+                                <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Server Access</h5>
+                                <p class="mb-0">Please use the username <strong>server@gmail.com</strong> and the password <strong>server1234</strong> to access server features.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Section - Login Form -->
+            <div class="col-md-8 col-lg-6 col-xl-5">
                 <div class="card bg-pattern">
 
                     <div class="card-body p-4">
@@ -153,6 +192,79 @@
     @endif
 </script>
 
+<script>
+function setRole(role) {
+    document.getElementById('selectedRole').textContent = role.charAt(0).toUpperCase() + role.slice(1);
+    
+    // Auto-fill credentials based on role
+    const loginInput = document.getElementById('login');
+    const passwordInput = document.getElementById('password');
+    const adminCredentials = document.getElementById('adminCredentials');
+    const serverCredentials = document.getElementById('serverCredentials');
+    
+    if (role === 'admin') {
+        loginInput.value = 'abemuchikan@gmail.com';
+        passwordInput.value = 'W@njiras870';
+        adminCredentials.style.display = 'block';
+        serverCredentials.style.display = 'none';
+    } else if (role === 'server') {
+        loginInput.value = 'server@gmail.com';
+        passwordInput.value = 'server1234';
+        adminCredentials.style.display = 'none';
+        serverCredentials.style.display = 'block';
+    }
+    
+    // Visual feedback for selected role
+    document.querySelectorAll('.btn-primary, .btn-info').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+}
+</script>
+
+<style>
+/* Add these styles */
+.btn-lg {
+    padding: 15px 25px;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+}
+
+.btn-lg:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.btn.active {
+    transform: scale(0.98);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0 35px 0 rgba(154,161,171,.15);
+}
+
+/* Adjust spacing for the new layout */
+.account-pages {
+    margin-top: 3% !important;
+}
+
+.credentials-info {
+    transition: all 0.3s ease;
+}
+
+.alert {
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.alert-heading {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+</style>
 
 </body>
 </html>
