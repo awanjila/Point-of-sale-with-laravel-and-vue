@@ -1,0 +1,17 @@
+<script src="assets/libs/tinymce/tinymce.min.js"></script>
+
+<script src="assets/js/pages/form-editor.init.js"></script>
+
+10,000*2/100 = 200/=
+10200*2/100 = 10,404/=
+10404 * 2/100 = 10612/= 
+ 
+He will actually pay back 26,388/=
+
+instead of 14,000/=
+
+
+
+ src="{{ (!empty($about->about_image))? url($about->about_image):url('upload/no_image.jpg') }}" alt="Card image cap"> 
+  <img  src="{{ (!empty($about->about_image))? url($about->about_image):url('upload/no_image.jpg') }}" alt="Card image cap">
+
