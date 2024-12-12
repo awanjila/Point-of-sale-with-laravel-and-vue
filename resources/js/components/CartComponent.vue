@@ -102,8 +102,8 @@
       <!-- Button Container -->
       <div class="button-container">
         <button @click="resetCart" class="btn btn-warning">Reset</button>
-        <button @click="openPaymentModal" class="btn btn-success">Pay</button>
-        <button @click="holdDraft" class="btn btn-info">Hold</button>
+        <button @click="openPaymentModal" class="btn btn-success">Order</button>
+        <!-- <button @click="holdDraft" class="btn btn-info">Hold</button> -->
       </div>
     </div>
 
@@ -254,7 +254,7 @@ const decreaseQuantity = (item) => {
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
   margin-bottom: 5px;
   overflow-y: auto;
-  max-height: calc(100vh - 420px); /* Adjusted to show scroll after ~11 items */
+  max-height: calc(100vh - 420px); /* Adjusted to show ~10 items */
 }
 
 .cart-items {

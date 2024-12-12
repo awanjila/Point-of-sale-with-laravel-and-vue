@@ -195,15 +195,15 @@ onMounted(() => {
 
 /* Product Grid Styling */
 .product-grid {
-  height: 400px;
+  height: 450px;
   overflow-y: auto;
   padding: 10px;
 }
 
 .grid-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
   padding: 10px;
 }
 
@@ -217,6 +217,7 @@ onMounted(() => {
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
+  overflow: hidden;
 }
 
 .grid-item:hover {
@@ -225,9 +226,9 @@ onMounted(() => {
 }
 
 .product-image {
-  width: 120px;
-  height: 120px;
-  margin-bottom: 10px;
+  width: 100px;
+  height: 100px;
+  margin-bottom: 8px;
 }
 
 .product-image img {
@@ -281,23 +282,47 @@ onMounted(() => {
 
 .add-btn {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  background: white;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.9);
   border: none;
   border-radius: 50%;
-  width: 30px;
-  height: 30px;
+  width: 35px;
+  height: 35px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   color: #28a745;
-  transition: transform 0.2s ease;
+  transition: all 0.3s ease;
+  opacity: 0;
+  z-index: 2;
+}
+
+.grid-item:hover .add-btn {
+  opacity: 1;
 }
 
 .add-btn:hover {
-  transform: scale(1.1);
+  transform: translate(-50%, -50%) scale(1.1);
+  background: white;
+}
+
+.grid-item::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.grid-item:hover::after {
+  opacity: 1;
 }
 
 /* Stock level color changes */
@@ -316,13 +341,13 @@ onMounted(() => {
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .grid-container {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 8px;
   }
 
   .product-image {
-    width: 100px;
-    height: 100px;
+    width: 90px;
+    height: 90px;
   }
 }
 
