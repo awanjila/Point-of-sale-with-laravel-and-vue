@@ -385,4 +385,128 @@ onMounted(() => {
   margin-bottom: 20px;
   color: #333;
 }
+
+/* Add these responsive styles */
+@media screen and (max-width: 768px) {
+  .product-container {
+    padding: 8px;
+  }
+
+  .search-bar {
+    margin-bottom: 8px;
+  }
+
+  .search-bar input {
+    padding: 6px;
+    font-size: 0.9rem;
+  }
+
+  .grid-container {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 8px;
+    padding: 5px;
+  }
+
+  .grid-item {
+    padding: 5px;
+  }
+
+  .product-image {
+    width: 80px;
+    height: 80px;
+  }
+
+  .product-info {
+    gap: 2px;
+    padding: 3px;
+  }
+
+  .product-name-container {
+    height: 32px;
+    font-size: 0.75rem;
+  }
+
+  .product-code,
+  .product-size {
+    font-size: 0.7rem;
+  }
+
+  .add-btn {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+/* For very small screens */
+@media screen and (max-width: 480px) {
+  .grid-container {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 6px;
+  }
+
+  .product-image {
+    width: 70px;
+    height: 70px;
+  }
+
+  .product-name-container {
+    height: 28px;
+    font-size: 0.7rem;
+  }
+
+  .product-code,
+  .product-size {
+    font-size: 0.65rem;
+  }
+
+  .add-btn {
+    width: 25px;
+    height: 25px;
+  }
+}
+
+/* Optimize for touch devices */
+@media (hover: none) {
+  .add-btn {
+    opacity: 1; /* Always show add button on touch devices */
+    background: rgba(255, 255, 255, 0.9);
+  }
+
+  .grid-item {
+    touch-action: manipulation; /* Optimize for touch */
+  }
+
+  .product-grid {
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  }
+}
+
+/* Adjust grid height for different screen sizes */
+@media screen and (max-width: 768px) {
+  .product-grid {
+    height: calc(100vh - 180px);
+  }
+}
+
+/* Improve touch targets */
+@media (hover: none) {
+  .search-bar input {
+    height: 40px; /* Larger touch target */
+  }
+
+  .grid-item {
+    min-height: 120px; /* Ensure enough space for touch */
+  }
+}
+
+/* Handle landscape mode on mobile */
+@media screen and (max-width: 768px) and (orientation: landscape) {
+  .grid-container {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+
+  .product-grid {
+    height: calc(100vh - 150px);
+  }
+}
 </style>

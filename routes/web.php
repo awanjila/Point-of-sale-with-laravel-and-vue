@@ -49,7 +49,7 @@ Route::get('/', function () {
     }
     else
 
-        return view('admin.admin_dashboard')->middleware('permission:dashboard.menu');
+        return view('admin.admin_dashboard');
 
 
 });

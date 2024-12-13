@@ -483,4 +483,130 @@ const decreaseQuantity = (item) => {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Add these responsive styles */
+@media screen and (max-width: 768px) {
+  .cart-container {
+    padding: 10px 5px;
+  }
+
+  .cart-items th,
+  .cart-items td {
+    padding: 6px 4px;
+    font-size: 0.75rem;
+  }
+
+  .product-name-cell {
+    max-width: 120px;
+  }
+
+  .quantity-control {
+    gap: 2px;
+  }
+
+  .qty-btn {
+    width: 20px;
+    height: 20px;
+  }
+
+  .qty-input {
+    width: 35px;
+    height: 20px;
+    font-size: 0.75rem;
+  }
+
+  .cart-summary {
+    padding: 8px;
+  }
+
+  .summary-item {
+    font-size: 0.9rem;
+  }
+
+  .summary-item.total .summary-value {
+    font-size: 1.2rem;
+  }
+
+  .button-container {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .btn {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+  }
+
+  .customer-search {
+    margin-bottom: 10px;
+  }
+
+  .customer-search input,
+  .customer-search select {
+    font-size: 0.9rem;
+    padding: 6px;
+  }
+}
+
+/* For very small screens */
+@media screen and (max-width: 480px) {
+  .cart-items th,
+  .cart-items td {
+    padding: 4px 2px;
+    font-size: 0.7rem;
+  }
+
+  .product-name-cell {
+    max-width: 100px;
+  }
+
+  .qty-btn {
+    width: 18px;
+    height: 18px;
+  }
+
+  .qty-input {
+    width: 30px;
+  }
+
+  .summary-item.total .summary-value {
+    font-size: 1.1rem;
+  }
+
+  .btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+}
+
+/* Add styles for better touch interaction on mobile */
+@media (hover: none) {
+  .qty-btn {
+    min-width: 30px; /* Larger touch target */
+    min-height: 30px;
+  }
+
+  .btn {
+    min-height: 44px; /* Standard touch target size */
+  }
+
+  .no-bg-btn {
+    padding: 8px;
+  }
+}
+
+/* Adjust fixed bottom section for mobile */
+@media screen and (max-width: 768px) {
+  .fixed-bottom-section {
+    padding: 8px;
+  }
+
+  .cart-summary-container {
+    margin-bottom: 5px;
+  }
+
+  .cart-items-container {
+    max-height: calc(100vh - 300px); /* Adjust for smaller screens */
+  }
+}
 </style>

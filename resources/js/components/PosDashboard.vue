@@ -298,4 +298,34 @@ export default {
   font-weight: 500;
 }
 
+/* Add to your existing styles */
+@media screen and (max-width: 768px) {
+  .pos-dashboard .row {
+    flex-direction: column;
+  }
+
+  .col-6 {
+    width: 100%;
+    margin: 10px 0;
+  }
+
+  .cart-container,
+  .product-container {
+    margin: 0;
+    height: auto;
+  }
+
+  .header {
+    padding: 10px;
+  }
+
+  .logo {
+    height: 40px;
+  }
+
+  .header-icons {
+    gap: 15px;
+  }
+}
+
 </style>
