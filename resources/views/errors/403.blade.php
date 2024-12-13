@@ -89,7 +89,7 @@
 
                 <div class="row mt-3">
                     <div class="col-12 text-center">
-                        <p class="text-white-50">Return to <a href="/dashboard" class="text-white ms-1"><b>Home</b></a></p>
+                        <p class="text-white-50">Return to <a href="/pos" class="text-white ms-1"><b>Home</b></a></p>
                     </div> <!-- end col -->
                 </div>
                 <!-- end row -->
@@ -103,7 +103,7 @@
 <!-- end page -->
 
 <footer class="footer footer-alt">
-    <script>document.write(new Date().getFullYear())</script> &copy; POS by <a href="https://api.whatsapp.com/send/?phone=254781312070&text&type=phone_number&app_absent=0" class="text-white-50">Coderthemes</a>
+    <script>document.write(new Date().getFullYear())</script> &copy; POS by <a href="https://api.whatsapp.com/send/?phone=254781312070&text&type=phone_number&app_absent=0" class="text-white-50">Wabe Creatives</a>
 </footer>
 
 <!-- Vendor js -->

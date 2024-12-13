@@ -49,14 +49,14 @@ Route::get('/', function () {
     }
     else
 
-        return view('admin.admin_dashboard');
+        return view('admin.admin_dashboard')->middleware('permission:dashboard.menu');
 
 
 });
 
 Route::get('/dashboard', function () {
     return view('admin.admin_dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard')->middleware('permission:dashboard.menu');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
