@@ -6,17 +6,28 @@
         <div class="col-6 cart-container">
           <!-- Header Section -->
           <div class="header">
-            <img :src="'/assets/images/logo-dark.png'" alt="Logo" class="logo"/>
-            <div class="header-icons">
-              <a href="/dashboard">
-                <i class="fas fa-home"></i> <!-- Home Icon -->
-              </a>
-              <!-- <i class="fas fa-print" @click="printReceipt"></i>  -->
-              <i class="fas fa-user"
-                  @mouseover="isHovered = true"
-                  @mouseleave="isHovered = false"></i>
+            <div class="header-section left">
+              <div class="nav-item">
+                <a href="/dashboard">
+                  <i class="fas fa-home"></i>
+                  <span class="nav-label">To Dashboard</span>
+                </a>
+              </div>
+            </div>
 
-            <span v-if="isHovered">Hi, {{ userData.name }}</span>
+            <div class="header-section center">
+              <img :src="'/assets/images/logo-dark.png'" alt="Logo" class="logo"/>
+            </div>
+
+            <div class="header-section right">
+              <div class="user-info">
+                <i class="fas fa-user"></i>
+                <span class="user-name">{{ userData.name }}</span>
+              </div>
+              
+              <a href="#" @click.prevent="logout" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+              </a>
             </div>
           </div>
 
@@ -58,6 +69,7 @@ import ProductsImages from './ProductsImagesComponent.vue';
 import CategoryMenu from './CategoryMenu.vue';
 import CustomerForm from './CustomerForm.vue';
 import { useCartStore } from './stores/cart';
+import axios from 'axios';
 
 export default {
   components: { Cart,ProductsImages, CategoryMenu, CustomerForm },
@@ -106,6 +118,14 @@ export default {
       // Implement print functionality
       window.print();
     },
+    async logout() {
+      try {
+        await axios.post('/logout');
+        window.location.href = '/login';
+      } catch (error) {
+        console.error('Logout failed:', error);
+      }
+    }
   },
 };
 </script>
@@ -148,26 +168,52 @@ export default {
   padding: 15px;
   background-color: #ffffff;
   border-radius: 8px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); /* Box shadow */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
   margin-bottom: 15px;
 }
 
-.header .logo {
-  height: 40px;
-}
-
-.header-icons {
+.header-section {
   display: flex;
-  gap: 20px;
+  align-items: center;
+  gap: 25px;
 }
 
-.header-icons i {
+.header-section.left {
+  flex: 1;
+}
+
+.header-section.center {
+  flex: 2;
+  justify-content: center;
+}
+
+.header-section.right {
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.logo {
+  height: 60px;
+}
+
+.nav-item a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.nav-item i {
   font-size: 20px;
-  cursor: pointer;
+  color: #333;
 }
 
-.header-icons i:hover {
-  color: #007bff;
+.nav-label {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
 }
 
 /* Button container for Category and Brand buttons */
@@ -219,5 +265,37 @@ export default {
   overflow-y: auto;
 }
 
+.logout-btn {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 15px;
+  font-size: 20px;
+  text-decoration: none;
+}
+
+.logout-btn:hover {
+  color: #dc3545;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.user-info i {
+  font-size: 20px;
+  color: #333;
+}
+
+.user-name {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
 
 </style>
