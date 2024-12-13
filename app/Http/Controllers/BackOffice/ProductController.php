@@ -50,11 +50,11 @@ class ProductController extends Controller
 
         //dd($request->expire_date);
 
-//        $product_image =$request->file('product_image');
-//        $name_gen= hexdec(uniqid()).'.'.$product_image->getClientOriginalExtension();
-//        Image::make($product_image)->resize(300,300)->save('upload/product/'.$name_gen);
-//
-//        $save_url='upload/product/'.$name_gen;
+       $product_image =$request->file('product_image');
+       $name_gen= hexdec(uniqid()).'.'.$product_image->getClientOriginalExtension();
+       Image::make($product_image)->resize(300,300)->save('upload/product/'.$name_gen);
+
+       $save_url='upload/product/'.$name_gen;
 
        // dd($save_url);
         $pcode = IdGenerator::generate(['table' => 'products', 'field'=> 'product_code', 'length' => 6, 'prefix'=> 'RBK']);
@@ -73,7 +73,7 @@ class ProductController extends Controller
 //            'selling_price'=>  $selling_price,
             'buying_date'=> $request->buying_date,
             'expire_date'=> $request->expire_date,
-           'product_image'=> "image",
+           'product_image'=> $save_url,
             'product_store'=>$request->product_store,
             'created_at'=>Carbon::now(),
         ]);
@@ -105,11 +105,11 @@ class ProductController extends Controller
 
         if ($request->file('product_image')) {
 
-//            $image = $request->file('product_image');
-//            $name_gen = hexdec(uniqid()) . '.' . $image->getClientOriginalExtension();
-//            Image::make($image)->resize(300, 300)->save('upload/product/' . $name_gen);
-//
-//            $save_url = 'upload/product/' . $name_gen;
+           $image = $request->file('product_image');
+           $name_gen = hexdec(uniqid()) . '.' . $image->getClientOriginalExtension();
+           Image::make($image)->resize(300, 300)->save('upload/product/' . $name_gen);
+
+           $save_url = 'upload/product/' . $name_gen;
 
             Product::findOrfail($product_id)->update([
                 'product_name' => $request->product_name,
@@ -120,7 +120,7 @@ class ProductController extends Controller
                 'selling_price' => $request->selling_price,
                 'buying_date' => $request->buying_date,
                 'expire_date' => $request->expire_date,
-                'product_image' => nullValue(),
+                'product_image' => $save_url,
                 'product_store'=>$request->product_store,
                 'created_at' => Carbon::now(),
             ]);

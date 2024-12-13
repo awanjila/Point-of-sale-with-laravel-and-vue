@@ -11,7 +11,7 @@
               <a href="/dashboard">
                 <i class="fas fa-home"></i> <!-- Home Icon -->
               </a>
-              <i class="fas fa-print" @click="printReceipt"></i> <!-- Print Icon -->
+              <!-- <i class="fas fa-print" @click="printReceipt"></i>  -->
               <i class="fas fa-user"
                   @mouseover="isHovered = true"
                   @mouseleave="isHovered = false"></i>
