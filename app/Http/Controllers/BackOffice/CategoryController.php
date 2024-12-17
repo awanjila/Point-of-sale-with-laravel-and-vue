@@ -85,8 +85,21 @@ class CategoryController extends Controller
 
     }  //EndMethod
 
-    public function __invoke(Request $request){
-        return Category::all();
+    public function __invoke()
+    {
+        $categories = Category::all();
+        
+        \Log::info('Categories Retrieved', [
+            'count' => $categories->count(),
+            'categories' => $categories->map(function($cat) {
+                return [
+                    'id' => $cat->id,
+                    'name' => $cat->category_name,
+                    'type_of_id' => gettype($cat->id)
+                ];
+            })
+        ]);
 
-    }//endmethod
+        return response()->json($categories);
+    }
 }

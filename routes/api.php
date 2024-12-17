@@ -9,7 +9,7 @@ use App\Http\Controllers\BackOffice\CustomerController;
 use App\Http\Controllers\BackOffice\OrderController;
 
 
-Route::get('/pos/products', POSController::class);
+Route::get('/pos/products', [POSController::class, 'getProducts']);
 Route::get('/pos/categories', CategoryController::class);
 Route::get('/pos/customers', CustomerController::class);
 // Route::get('/cart-items', CartController::class);

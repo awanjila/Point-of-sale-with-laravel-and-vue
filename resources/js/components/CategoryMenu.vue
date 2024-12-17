@@ -47,7 +47,20 @@ export default {
   },
   methods: {
     selectCategory(category) {
-      this.$emit('categorySelected', category);
+      console.group('Category Selection in Menu');
+      console.log('Raw Category Object:', category);
+      console.log('Category Type:', typeof category);
+      console.log('Category ID:', category ? category.id : 'No Category');
+      console.log('Category Name:', category ? category.category_name : 'All Categories');
+      console.groupEnd();
+      
+      // Ensure the category is a plain object, not a Proxy
+      const plainCategory = category ? { ...category } : null;
+      
+      // Emit both events with plain object
+      this.$emit('categorySelected', plainCategory);
+      this.$emit('update:selectedCategory', plainCategory);
+      this.$emit('close');
     },
     filterCategories() {
       this.filteredCategories = this.categories.filter(category =>

@@ -1,13 +1,24 @@
 <template>
   <div class="product-container">
-    <!-- Search Input -->
+    <!-- Search Input with placeholder and icon -->
     <div class="search-bar">
-      <input 
-        type="text" 
-        v-model="searchQuery" 
-        class="form-control" 
-        placeholder="Search for products..." 
-      />
+      <div class="search-input-wrapper">
+        <i class="fas fa-search search-icon"></i>
+        <input 
+          type="text" 
+          v-model="searchQuery" 
+          class="form-control search-input" 
+          placeholder="Search products by name, category, or code..." 
+        />
+        <!-- Clear search button -->
+        <button 
+          v-if="searchQuery" 
+          class="clear-search-btn" 
+          @click="searchQuery = ''"
+        >
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
     </div>
 
     <!-- Product Grid (Scrollable) -->
@@ -32,6 +43,14 @@
             <div class="info-row product-name-container">
               <span class="product-name" :title="product.product_name">{{ product.product_name }}</span>
             </div>
+            
+            <!-- New Category Name Display -->
+            <div class="info-row category-name-container">
+              <span class="category-name">
+                {{ getCategoryName(product.category_id) }}
+              </span>
+            </div>
+            
             <div class="info-row">
               <span class="stock-info">{{ product.product_store }} Remaining</span>
             </div>
@@ -74,7 +93,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import axios from 'axios';
 import { useCartStore } from './stores/cart';
 import toastr from 'toastr';
@@ -100,38 +119,172 @@ const itemsPerPage = ref(20); // Adjust the number of items per page
 // Add sound effect
 const addToCartSound = new Audio('/assets/sound/ding-80828.mp3'); // Add your sound file path
 
+// Enhanced logging function
+const logDetailedProductInfo = (products, category) => {
+  console.group('Product Filtering Debug');
+  console.log('Total Products:', products.length);
+  console.log('Selected Category:', category);
+  
+  if (category) {
+    const filteredProducts = products.filter(p => p.category_id === category.id);
+    console.log('Filtered Product Count:', filteredProducts.length);
+    
+    filteredProducts.forEach(product => {
+      console.log('Matching Product:', {
+        id: product.id,
+        name: product.product_name,
+        category_id: product.category_id
+      });
+    });
+  }
+  
+  console.groupEnd();
+};
+
 // Fetch Products from API
 const getProducts = async () => {
   try {
-    const res = await axios.get('/api/pos/products');
-    products.value = res.data;
+    console.group('Fetching Products');
+    console.log('Selected Category:', props.selectedCategory);
+    
+    const params = props.selectedCategory 
+      ? { 
+          category_id: props.selectedCategory.id,
+          debug: true
+        } 
+      : { debug: true };
+    
+    console.log('API Request Params:', params);
+    console.log('Category ID Type:', typeof params.category_id);
+    
+    try {
+      const res = await axios.get('/api/pos/products', { 
+        params,
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      
+      console.log('Full Response:', res);
+      console.log('Response Data:', res.data);
+      console.log('Number of Products:', res.data.length);
+      
+      // Detailed product logging
+      const productCategoryIds = res.data.map(product => product.category_id);
+      console.log('Unique Product Category IDs:', [...new Set(productCategoryIds)]);
+      console.log('Product Category ID Types:', 
+        [...new Set(res.data.map(product => typeof product.category_id))]
+      );
+      
+      // Log products for the selected category
+      if (props.selectedCategory) {
+        const filteredProducts = res.data.filter(
+          product => {
+            console.log('Comparing:', {
+              productCategoryId: product.category_id,
+              selectedCategoryId: props.selectedCategory.id,
+              comparisonResult: product.category_id === props.selectedCategory.id
+            });
+            return product.category_id === props.selectedCategory.id;
+          }
+        );
+        
+        console.log('Filtered Products for Category:', {
+          categoryId: props.selectedCategory.id,
+          categoryName: props.selectedCategory.category_name,
+          productCount: filteredProducts.length
+        });
+      }
+      
+      console.groupEnd();
+      
+      // Update products
+      products.value = res.data;
+    } catch (apiError) {
+      console.error('API Error Details:', {
+        status: apiError.response?.status,
+        data: apiError.response?.data,
+        message: apiError.message,
+        config: apiError.config
+      });
+      
+      // More detailed error handling
+      if (apiError.response) {
+        if (apiError.response.status === 404) {
+          toastr.error('Category not found. Please select a valid category.');
+        } else {
+          toastr.error(`Error: ${apiError.response.data.error || 'Failed to load products'}`);
+        }
+      } else if (apiError.request) {
+        toastr.error('No response received from server. Please check your connection.');
+      } else {
+        toastr.error('Error setting up the request. Please try again.');
+      }
+      
+      products.value = [];
+    }
   } catch (error) {
-    console.error('Failed to load products:', error);
+    console.error('Unexpected global error:', error);
+    toastr.error('An unexpected error occurred. Please try again.');
+    products.value = [];
   }
 };
 
-// Handle product filtering based on selected category and search query
+// Watch for category changes with comprehensive logging
+watch(() => props.selectedCategory, (newCategory, oldCategory) => {
+  console.group('Category Change Detection in ProductsImagesComponent');
+  console.log('Old Category:', oldCategory);
+  console.log('New Category:', newCategory);
+  console.log('New Category ID:', newCategory ? newCategory.id : 'No Category');
+  console.log('New Category Name:', newCategory ? newCategory.category_name : 'All Categories');
+  console.groupEnd();
+  
+  // Reset pagination
+  currentPage.value = 1;
+  
+  // Fetch products
+  getProducts();
+}, { immediate: true });
+
+// Computed property for filtered products with enhanced search
 const filteredProducts = computed(() => {
+  // Trim and convert search query to lowercase
+  const searchTerm = searchQuery.value.trim().toLowerCase();
+  
   let filtered = products.value;
 
-  // Filter by selected category
-  if (props.selectedCategory) {
-    filtered = filtered.filter(product => product.category_id === props.selectedCategory.id);
+  // If there's a search term, apply filtering
+  if (searchTerm) {
+    filtered = filtered.filter(product => {
+      // Search across multiple fields
+      const matchesName = product.product_name.toLowerCase().includes(searchTerm);
+      const matchesCategory = getCategoryName(product.category_id).toLowerCase().includes(searchTerm);
+      const matchesProductCode = product.product_code?.toLowerCase().includes(searchTerm);
+      
+      return matchesName || matchesCategory || matchesProductCode;
+    });
   }
 
-  // Filter by search query
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
+  // If a category is selected, further filter by category
+  if (props.selectedCategory) {
     filtered = filtered.filter(product => 
-      product.product_name.toLowerCase().includes(query)
+      product.category_id === props.selectedCategory.id
     );
   }
 
   return filtered;
 });
 
+// Modify the search query watcher to reset pagination
+watch(searchQuery, () => {
+  // Reset to first page when search changes
+  currentPage.value = 1;
+});
+
 // Pagination logic
-const totalPages = computed(() => Math.ceil(filteredProducts.value.length / itemsPerPage.value));
+const totalPages = computed(() => 
+  Math.ceil(filteredProducts.value.length / itemsPerPage.value)
+);
 
 const paginatedProducts = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value;
@@ -174,23 +327,87 @@ const handleImageError = (e) => {
   e.target.src = 'assets/images/placeholder-img.png'; // Update fallback image path
 };
 
-// Fetch products on component mount
+// Add a method to get category name
+const getCategoryName = (categoryId) => {
+  // Find the category with the matching ID
+  const category = categories.value.find(cat => cat.id === categoryId);
+  return category ? category.category_name : 'Unknown Category';
+};
+
+// Add a reactive ref for categories
+const categories = ref([]);
+
+// Fetch categories when component is mounted
+onMounted(async () => {
+  try {
+    const res = await axios.get('/api/pos/categories');
+    categories.value = res.data;
+  } catch (error) {
+    console.error('Failed to fetch categories:', error);
+  }
+});
+
+// Lifecycle hook
 onMounted(() => {
   getProducts();
 });
 </script>
 
 <style scoped>
-/* Search Bar Styling */
+/* Enhanced search bar styling */
 .search-bar {
   margin-bottom: 20px;
+  position: relative;
 }
 
-.search-bar input {
-  padding: 10px;
+.search-input-wrapper {
+  position: relative;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #888;
+  z-index: 10;
+}
+
+.search-input {
+  padding: 10px 10px 10px 35px; /* Space for icon */
   width: 100%;
-  border-radius: 5px;
-  border: 1px solid #ccc;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.clear-search-btn:hover {
+  color: #333;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .search-input {
+    font-size: 14px;
+  }
 }
 
 /* Product Grid Styling */
@@ -507,6 +724,26 @@ onMounted(() => {
 
   .product-grid {
     height: calc(100vh - 150px);
+  }
+}
+
+/* Add some styling for the category name */
+.category-name-container {
+  font-size: 0.8em;
+  color: #666;
+  margin-top: 4px;
+}
+
+.category-name {
+  background-color: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .category-name-container {
+    font-size: 0.7em;
   }
 }
 </style>

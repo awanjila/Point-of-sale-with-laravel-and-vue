@@ -111,4 +111,81 @@ public function POSRestaraunt(){
 return Product::all();
 
     }//endmethod
+
+    public function getProducts(Request $request)
+    {
+        try {
+            \Log::info('Products Request Received', [
+                'all_params' => $request->all(),
+                'category_id' => $request->input('category_id'),
+                'category_id_type' => gettype($request->input('category_id'))
+            ]);
+
+            $query = Product::query();
+
+            // If a category is specified, filter by category
+            if ($request->has('category_id')) {
+                $categoryId = $request->input('category_id');
+                
+                \Log::info('Filtering Products', [
+                    'category_id' => $categoryId,
+                    'category_id_type' => gettype($categoryId)
+                ]);
+                
+                // Verify the category exists
+                $category = Category::find($categoryId);
+                
+                if (!$category) {
+                    \Log::error('Category not found', [
+                        'requested_category_id' => $categoryId,
+                        'existing_category_ids' => Category::pluck('id')->toArray()
+                    ]);
+                    
+                    return response()->json([
+                        'error' => 'Category not found',
+                        'requested_category_id' => $categoryId,
+                        'existing_categories' => Category::all()
+                    ], 404);
+                }
+
+                // Filter products by category
+                $query->where('category_id', $categoryId);
+            }
+
+            // Fetch products with additional details
+            $products = $query->select([
+                'id', 
+                'product_name', 
+                'category_id', 
+                'product_image', 
+                'product_store', 
+                'selling_price'
+            ])->get();
+            
+            \Log::info('Products Found', [
+                'count' => $products->count(),
+                'category_filter' => $request->input('category_id'),
+                'products' => $products->map(function($product) {
+                    return [
+                        'id' => $product->id,
+                        'name' => $product->product_name,
+                        'category_id' => $product->category_id,
+                        'category_id_type' => gettype($product->category_id)
+                    ];
+                })
+            ]);
+
+            return response()->json($products);
+        } catch (\Exception $e) {
+            \Log::error('Error in getProducts', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'error' => 'An unexpected error occurred',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

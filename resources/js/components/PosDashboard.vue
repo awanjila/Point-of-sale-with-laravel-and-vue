@@ -39,12 +39,9 @@
         <!-- Products Section -->
         <div class="col-6 product-container">
           <!-- Category and Brand Buttons (Full Width) -->
-          <div class="button-container">
-            <button @click="toggleCategoryMenu" class="btn-category">List of Categories</button>
-            <!-- <button @click="toggleBrandsMenu" class="btn-brand">List of Brands</button> -->
-          </div>
+        
           <!-- <Products :selectedCategory="selectedCategory" /> -->
-          <ProductsImages :selectedCategory="selectedCategory" />
+          <ProductsImages :selectedCategory="selectedCategory" @update:selectedCategory="selectCategory" />
         </div>
       </div>
 
@@ -105,8 +102,19 @@ export default {
       this.showCategoryMenu = !this.showCategoryMenu;
     },
     selectCategory(category) {
-      this.selectedCategory = category;
-      this.showCategoryMenu = false;
+      console.group('Category Selection in Dashboard');
+      console.log('Raw Category:', category);
+      console.log('Category Type:', typeof category);
+      console.log('Category ID:', category ? category.id : 'No Category');
+      console.log('Category Name:', category ? category.category_name : 'All Categories');
+      console.groupEnd();
+      
+      // Ensure reactive update
+      this.$nextTick(() => {
+        // Create a new object to ensure reactivity
+        this.selectedCategory = category ? { ...category } : null;
+        this.showCategoryMenu = false;
+      });
     },
     toggleCustomerForm() {
       this.showCustomerForm = !this.showCustomerForm;
