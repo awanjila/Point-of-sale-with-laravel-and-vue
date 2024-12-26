@@ -3,13 +3,14 @@
     <!-- Close button -->
     <button class="close-btn no-print" @click="$emit('close')">×</button>
 
-    <div class="receipt-container" v-if="orderDetails">
+    <div class="receipt-container" v-if="orderDetails && settings">
       <!-- Header Section -->
       <div class="receipt-header">
-        <h1 class="company-name">Wabe Point</h1>
+        <h1 class="company-name">{{ settings.business_name || 'Wabe Point' }}</h1>
         <p class="sub-header">Pos/Inventory System</p>
-        <p>Parklands 3rd Avenue</p>
-        <p>TEL: 0710909198, 0781312070</p>
+        <p>{{ settings.business_address || 'Parklands 3rd Avenue' }}</p>
+        <p>TEL: {{ settings.business_phone || '0710909198, 0781312070' }}</p>
+        <p v-if="settings.till_number">Till Number: {{ settings.till_number }}</p>
       </div>
 
       <!-- Receipt Info -->
@@ -47,16 +48,16 @@
       <!-- Summary Section -->
       <div class="summary-section">
         <div class="summary-row">
-          <span>Tax ({{ orderDetails.vat || '0.00' }}%)</span>
-          <span>{{ Number(orderDetails.vat).toFixed(2) }}</span>
+          <span>Tax ({{ settings.tax_percentage || '0.00' }}%)</span>
+          <span>{{ Number(orderDetails.vat || 0).toFixed(2) }}</span>
         </div>
         <div class="summary-row">
           <span>Discount</span>
-          <span>{{ Number(orderDetails.discount).toFixed(2) }}</span>
+          <span>{{ Number(orderDetails.discount || 0).toFixed(2) }}</span>
         </div>
         <div class="summary-row total">
           <strong>Grand Total</strong>
-          <strong>{{ Number(orderDetails.total).toFixed(2) }}</strong>
+          <strong>{{ Number(orderDetails.total).toFixed(2) }} {{ settings.currency || 'KES' }}</strong>
         </div>
       </div>
 
@@ -80,11 +81,18 @@
 
       <div class="divider"></div>
 
+      <!-- Receipt Header/Footer -->
+      <div class="receipt-custom-text">
+        <p v-if="settings.receipt_header" class="receipt-header-text">
+          {{ settings.receipt_header }}
+        </p>
+      </div>
+
       <!-- Footer Section -->
       <div class="receipt-footer">
         <p class="served-by">Served by: {{ userData.name }}</p>
-        <p class="thank-you">Thank You For Shopping With Us</p>
-        <p class="footer-contact">System By: Wabe Point • 0781312070</p>
+        <p class="thank-you">{{ settings.receipt_footer || 'Thank You For Shopping With Us' }}</p>
+        <p class="footer-contact">System By: Wabe Point • {{ settings.business_phone || '0781312070' }}</p>
       </div>
     </div>
 
@@ -130,39 +138,34 @@ export default {
   data() {
     return {
       orderDetails: null,
-      loading: true,
-      error: null,
+      settings: null
     };
   },
-  created() {
+  mounted() {
     this.fetchOrderDetails();
+    this.fetchSettings();
   },
   methods: {
     async fetchOrderDetails() {
-      this.loading = true;
-      this.error = null;
       try {
         const response = await axios.get(`/api/order/${this.orderId}/details`);
-        if (response.data && response.data.success) {
-          this.orderDetails = response.data.data;
-          // Clear the cart after successfully loading the order details
-          const cartStore = useCartStore();
-          cartStore.clearCart();
-        } else {
-          this.error = 'Failed to load order details.';
-          console.error('Error fetching order details:', response.data.message);
-        }
+        this.orderDetails = response.data;
       } catch (error) {
-        this.error = 'An error occurred while fetching the order details.';
         console.error('Error fetching order details:', error);
-      } finally {
-        this.loading = false;
+      }
+    },
+    async fetchSettings() {
+      try {
+        const response = await axios.get('/api/settings');
+        this.settings = response.data;
+      } catch (error) {
+        console.error('Error fetching settings:', error);
       }
     },
     printReceipt() {
       window.print();
-    },
-  },
+    }
+  }
 };
 </script>
 
@@ -334,5 +337,16 @@ export default {
     max-height: none;
     width: 100%;
   }
+}
+
+.receipt-custom-text {
+  text-align: center;
+  margin: 10px 0;
+  font-style: italic;
+  color: #666;
+}
+
+.receipt-header-text {
+  font-size: 0.9em;
 }
 </style>

@@ -27,6 +27,19 @@ import Products from './components/ProductsComponent.vue';
 import ProductsImages from './components/ProductsImagesComponent.vue';
 import Cart from './components/CartComponent.vue';
 import PosDashboard from './components/PosDashboard.vue';
+import PinLoginComponent from './components/PinLoginComponent.vue';
+import SettingsComponent from './components/SettingsComponent.vue';
+
+// Export Vue and related libraries globally
+// window.Vue = {
+//   createApp,
+//   ref,
+//   reactive,
+//   computed,
+//   watch,
+//   onMounted,
+//   // Add other Vue 3 composition API methods as needed
+// };
 
 // Create the Vue application instance
 const app = createApp({
@@ -35,6 +48,8 @@ const app = createApp({
     ProductsImages,  // Registers the ProductsImages component
     Cart,      // Registers the Cart component
     PosDashboard,  // Registers the PosDashboard component
+    PinLoginComponent,
+    SettingsComponent,
   }
 });
 

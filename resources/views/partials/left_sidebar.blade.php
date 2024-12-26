@@ -338,7 +338,7 @@
                     @if(Auth::user()->can('expense.menu'))
 
     <li>
-        <a href="#expense" data-bs-toggle="collapse"><i class="fa fa-briefcase "></i><span> Expense Management </span> <span class="menu-arrow"></span>
+        <a href="#expense" data-bs-toggle="collapse"><i class="fa fa-money"></i><span> Expense Management </span> <span class="menu-arrow"></span>
         </a>
         <div class="collapse" id="expense">
         <ul class="nav-second-level">
@@ -387,6 +387,16 @@
 
 
                     @endif
+
+                    
+
+            <li class="side-nav-item">
+                <a href="{{ route('get.settings') }}" class="side-nav-link">
+                    <i class="fa fa-cog"></i>
+                    <span> Company Settings </span>
+                </a>
+            </li>
+                  
 
 
 </ul>

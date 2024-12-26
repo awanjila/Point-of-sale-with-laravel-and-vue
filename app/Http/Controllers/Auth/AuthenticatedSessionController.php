@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use App\Models\User;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -23,13 +24,57 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(Request $request)
     {
-        $request->authenticate();
+        // Check if login is via PIN
+        if ($request->input('login_type') === 'pin') {
+            return $this->authenticateByPin($request);
+        }
 
-        $request->session()->regenerate();
+        // Existing username/password authentication
+        $request->validate([
+            'login' => ['required', 'string'],
+            'password' => ['required'],
+        ]);
 
-        return redirect()->intended(RouteServiceProvider::HOME);
+        $loginField = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'name';
+
+        $credentials = [
+            $loginField => $request->login,
+            'password' => $request->password
+        ];
+
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            $request->session()->regenerate();
+
+            return redirect()->intended(RouteServiceProvider::HOME);
+        }
+
+        return back()->withErrors([
+            'login' => __('auth.failed'),
+        ])->onlyInput('login');
+    }
+
+    protected function authenticateByPin(Request $request)
+    {
+        $pin = $request->input('pin');
+
+        // Find user by PIN (you'll need to add a pin column to users table)
+        $user = User::where('pin', $pin)->first();
+
+        if ($user) {
+            Auth::login($user);
+
+            return response()->json([
+                'success' => true,
+                'redirect' => route('dashboard')
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Invalid PIN'
+        ], 401);
     }
 
     /**

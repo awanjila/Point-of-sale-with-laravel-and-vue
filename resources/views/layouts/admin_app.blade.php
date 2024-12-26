@@ -14,6 +14,7 @@
 
     <!-- Plugins css -->
     @include('partials.styles')
+    @vite('resources/js/app.js')
 </head>
 
 <!-- body start -->

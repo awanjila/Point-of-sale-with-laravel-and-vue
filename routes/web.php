@@ -16,6 +16,7 @@ use App\Http\Controllers\BackOffice\OrderController;
 use App\Http\Controllers\BackOffice\RoleController;
 use App\Http\Controllers\BackOffice\PrinterController;
 use App\Http\Controllers\BackOffice\CartController;
+use App\Http\Controllers\BackOffice\SettingController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -30,18 +31,14 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-//Route::get('/dashboard', function () {
-//    // Check if user is authenticated
-//    if (!Auth::check()) {
-//        return redirect('/login');
-//    }
-//    else
-//
-//        return view('admin.admin_dashboard');
-//
-//
-//
-//});
+
+//Settings Controller
+Route::controller(SettingController::class)->group(function(){
+    Route::get('settings', 'index')->name('get.settings');
+    // Route::get('settings', 'store')->name('store.settings');
+
+})->middleware(['auth', 'verified']);
+
 
 Route::get('/', function () {
     if (!Auth::check()) {
@@ -319,6 +316,10 @@ Route::controller(PrinterController::class)->group(function(){
     Route::get('print/receipt', 'PrintReceipt')->name('print.receipt');
 
 })->middleware(['auth', 'verified']);
+
+Route::get('/settings', function () {
+    return view('settings');
+})->name('get.settings')->middleware(['auth', 'verified']);
 
 
 
