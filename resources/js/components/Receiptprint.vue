@@ -7,7 +7,7 @@
       <!-- Header Section -->
       <div class="receipt-header">
         <h1 class="company-name">{{ settings.business_name || 'Wabe Point' }}</h1>
-        <p class="sub-header">Pos/Inventory System</p>
+        <!-- <p class="sub-header">Pos/Inventory System</p> -->
         <p>{{ settings.business_address || 'Parklands 3rd Avenue' }}</p>
         <p>TEL: {{ settings.business_phone || '0710909198, 0781312070' }}</p>
         <p v-if="settings.till_number">Till Number: {{ settings.till_number }}</p>
@@ -16,11 +16,11 @@
       <!-- Receipt Info -->
       <div class="receipt-info">
         <div class="receipt-no">
-          <strong>#{{ orderDetails.invoice_no }}</strong>
+          <strong>#{{ orderDetails?.invoice_no || 'N/A' }}</strong>
         </div>
         <div class="receipt-type">CASH SALE</div>
         <div class="receipt-details">
-          <span>{{ orderDetails.order_date }}</span>
+          <span>{{ orderDetails.order_date || new Date().toLocaleDateString() }}</span> <br>
           <span>{{ orderDetails.customer ? orderDetails.customer.name : 'walk-in-customer' }}</span>
         </div>
       </div>
@@ -36,9 +36,9 @@
 
       <!-- Products List -->
       <div class="products-list">
-        <div v-for="item in orderDetails.cart" :key="item.product_name" class="product-item">
+        <div v-for="item in cartItems" :key="item.product_name" class="product-item">
           <div class="product-name">{{ item.product_name }}</div>
-          <div class="qty-price">{{ item.quantity }}×{{ Number(item.unit_cost).toFixed(2) }}</div>
+          <div class="qty-price">{{ item.quantity }}×{{ Number(item.selling_price).toFixed(2) }}</div>
           <div class="total">{{ Number(item.total).toFixed(2) }}</div>
         </div>
       </div>
@@ -57,7 +57,7 @@
         </div>
         <div class="summary-row total">
           <strong>Grand Total</strong>
-          <strong>{{ Number(orderDetails.total).toFixed(2) }} {{ settings.currency || 'KES' }}</strong>
+          <strong>{{ Number(orderDetails.total || cartItems.reduce((sum, item) => sum + item.total, 0)).toFixed(2) }} {{ settings.currency || 'KES' }}</strong>
         </div>
       </div>
 
@@ -67,15 +67,15 @@
       <div class="payment-info">
         <div class="payment-row">
           <span>Paid By</span>
-          <span>{{ paymentMethod || orderDetails.payment_method || 'N/A' }}</span>
+          <span>{{ paymentMethod || orderDetails.payment_method || 'cash' }}</span>
         </div>
         <div class="payment-row">
           <span>Amount Paid</span>
-          <span>{{ Number(receivedAmount || orderDetails.amount_paid).toFixed(2) }}</span>
+          <span>{{ Number(receivedAmount || orderDetails.amount_paid || 0).toFixed(2) }}</span>
         </div>
         <div class="payment-row">
           <span>Change</span>
-          <span>{{ Number(changeReturn || orderDetails.change_return).toFixed(2) }}</span>
+          <span>{{ Number(changeReturn || orderDetails.change_return || 0).toFixed(2) }}</span>
         </div>
       </div>
 
@@ -138,7 +138,8 @@ export default {
   data() {
     return {
       orderDetails: null,
-      settings: null
+      settings: null,
+      cartStore: useCartStore()
     };
   },
   mounted() {
@@ -149,9 +150,41 @@ export default {
     async fetchOrderDetails() {
       try {
         const response = await axios.get(`/api/order/${this.orderId}/details`);
-        this.orderDetails = response.data;
+        
+        console.log('Full Order Details Response:', response.data);
+
+        // Extract order details from the nested structure
+        if (response.data.success && response.data.data) {
+          this.orderDetails = {
+            ...response.data.data,
+            cart: response.data.cart || response.data.data.cart || []
+          };
+
+          console.log('Processed Order Details:', this.orderDetails);
+        } else {
+          console.warn('Unexpected response structure:', response.data);
+          this.orderDetails = {
+            invoice_no: 'N/A',
+            cart: []
+          };
+        }
+
+        // Fallback for cart items if needed
+        if ((!this.orderDetails.cart || this.orderDetails.cart.length === 0) && this.cartStore.cart.length > 0) {
+          this.orderDetails.cart = this.cartStore.cart.map(item => ({
+            ...item,
+            selling_price: item.selling_price || item.unit_cost,
+            total: item.quantity * (item.selling_price || item.unit_cost)
+          }));
+        }
       } catch (error) {
         console.error('Error fetching order details:', error);
+        
+        this.orderDetails = {
+          invoice_no: 'N/A',
+          cart: this.cartStore.cart || [],
+          total: this.cartStore.cart.reduce((sum, item) => sum + (item.total || 0), 0)
+        };
       }
     },
     async fetchSettings() {
@@ -164,6 +197,16 @@ export default {
     },
     printReceipt() {
       window.print();
+    }
+  },
+  computed: {
+    cartItems() {
+      // Ensure cart items have selling_price and total
+      return (this.orderDetails?.cart || []).map(item => ({
+        ...item,
+        selling_price: item.selling_price || item.unit_cost,
+        total: item.quantity * (item.selling_price || item.unit_cost)
+      }));
     }
   }
 };
