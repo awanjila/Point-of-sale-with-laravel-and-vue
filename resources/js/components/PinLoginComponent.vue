@@ -1,13 +1,9 @@
 <template>
   <div class="pin-login-container">
     <div class="login-wrapper">
-      <div class="login-header">
-        <img :src="'/assets/images/logo-dark.png'" alt="Wabe Point Logo" class="logo">
-        <h2>Secure Login</h2>
-      </div>
-
-      <div class="login-description">
-        <p>Enter your 4-digit PIN to access the system</p>
+      <div class="login-header mb-5">
+        <h2 class="fw-bold mb-2">Secure Access</h2>
+        <p class="text-muted">Enter your 4-digit PIN to continue</p>
       </div>
 
       <div class="pin-display-container">
@@ -16,7 +12,7 @@
             type="password" 
             v-model="pinDisplay" 
             readonly 
-            placeholder="Enter PIN"
+            placeholder="• • • •"
             class="pin-input"
           />
           <button 
@@ -43,7 +39,7 @@
         </div>
       </div>
 
-      <div class="login-info">
+      <div class="login-info mt-4">
         <div class="user-types">
           <div class="user-type">
             <i class="fas fa-user-shield"></i>
@@ -58,9 +54,10 @@
 
       <button 
         @click="submitPin" 
-        class="submit-btn glowing-btn" 
+        class="submit-btn" 
         :disabled="pin.length < 4"
       >
+        <i class="fas fa-arrow-right me-2"></i>
         Login
       </button>
     </div>
@@ -131,163 +128,163 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 .login-wrapper {
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-  padding: 40px;
-  width: 350px;
-  text-align: center;
-}
-
-.login-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.logo {
-  width: 120px;
-  margin-bottom: 15px;
+  width: 100%;
+  max-width: 480px;
+  padding: 2rem;
 }
 
 .login-header h2 {
-  color: #333;
-  margin: 0;
-  font-weight: 700;
-}
-
-.login-description {
-  color: #666;
-  margin-bottom: 20px;
+  font-size: 2.5rem;
+  color: #1a1a1a;
+  margin-bottom: 0.5rem;
 }
 
 .pin-display-container {
-  background: #f4f4f4;
-  border-radius: 10px;
-  padding: 15px;
-  margin-bottom: 20px;
+  background: #f8f9fa;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .pin-display {
-  display: flex;
-  justify-content: center;
-  align-items: center;
   position: relative;
 }
 
 .pin-input {
   width: 100%;
   text-align: center;
-  letter-spacing: 15px;
-  font-size: 24px;
+  letter-spacing: 1.5rem;
+  font-size: 2.5rem;
   border: none;
   background: transparent;
-  color: #333;
+  color: #1a1a1a;
+  padding: 1rem 0;
+  font-weight: 600;
+}
+
+.pin-input::placeholder {
+  color: #dee2e6;
 }
 
 .clear-btn {
   position: absolute;
   right: 0;
+  top: 50%;
+  transform: translateY(-50%);
   background: none;
   border: none;
-  color: #666;
+  color: #6c757d;
   cursor: pointer;
+  padding: 0.5rem;
+  transition: color 0.2s;
+}
+
+.clear-btn:hover {
+  color: #1a1a1a;
 }
 
 .keypad {
   display: grid;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 1rem;
+  margin: 2rem 0;
 }
 
 .keypad-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 1rem;
 }
 
 .keypad-btn {
-  background: #f4f4f4;
-  border: none;
-  border-radius: 10px;
-  padding: 15px;
-  font-size: 18px;
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 1.5rem;
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #1a1a1a;
   cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .keypad-btn:hover {
-  background: #e0e0e0;
-  transform: scale(1.05);
+  background: #f8f9fa;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.keypad-btn:active {
+  transform: translateY(0);
 }
 
 .empty-btn {
   background: transparent;
+  border: none;
+  box-shadow: none;
   cursor: default;
+}
+
+.empty-btn:hover {
+  background: transparent;
+  transform: none;
+  box-shadow: none;
 }
 
 .submit-btn {
   width: 100%;
-  padding: 15px;
-  background: linear-gradient(to right, #667eea, #764ba2);
+  padding: 1rem;
+  font-size: 1.1rem;
+  font-weight: 500;
   color: white;
+  background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
   border: none;
-  border-radius: 10px;
-  font-size: 18px;
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
+  transition: all 0.3s;
+  box-shadow: 0 4px 6px rgba(13, 110, 253, 0.2);
 }
 
-.glowing-btn {
-  box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
-  animation: glowing 1.5s infinite;
-}
-
-@keyframes glowing {
-  0% { box-shadow: 0 0 5px rgba(102, 126, 234, 0.3); }
-  50% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.6); }
-  100% { box-shadow: 0 0 5px rgba(102, 126, 234, 0.3); }
-}
-
-.submit-btn:hover {
-  transform: scale(1.02);
-  background: linear-gradient(to right, #764ba2, #667eea);
+.submit-btn:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px rgba(13, 110, 253, 0.3);
 }
 
 .submit-btn:disabled {
-  background: #cccccc;
+  background: #e9ecef;
   cursor: not-allowed;
-  animation: none;
   box-shadow: none;
-}
-
-.login-info {
-  margin-top: 20px;
 }
 
 .user-types {
   display: flex;
   justify-content: center;
-  gap: 20px;
-  color: #666;
+  gap: 2rem;
+  color: #6c757d;
+  margin: 2rem 0;
+  font-size: 0.9rem;
 }
 
 .user-type {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.user-type:hover {
+  background: #e9ecef;
 }
 
 .user-type i {
-  color: #667eea;
+  color: #0d6efd;
 }
 </style>

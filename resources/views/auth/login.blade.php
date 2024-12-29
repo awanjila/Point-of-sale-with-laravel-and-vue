@@ -22,18 +22,44 @@
     @vite('resources/js/app.js')
 </head>
 <body class="authentication-bg">
-    <div id="app" class="account-pages pt-2 pt-sm-5 pb-4 pb-sm-5">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-xxl-4 col-lg-5">
-                    <div class="card">
-                        <div class="card-body p-4">
-                            <div class="text-center w-75 m-auto">
-                                <h4 class="text-dark-50 text-center mt-0 fw-bold">Secure Login</h4>
-                                <p class="text-muted mb-4">Enter your 4-digit PIN to access the system</p>
+    <div id="app" class="account-pages">
+        <div class="container-fluid p-0">
+            <div class="row g-0 min-vh-100">
+                <!-- Left Side - Introduction -->
+                <div class="col-md-5 bg-primary-subtle">
+                    <div class="d-flex flex-column h-100 p-5">
+                        <div class="my-auto">
+                            <img src="/assets/images/logo-dark.png" alt="logo" class="mb-5" height="80" style="max-width: 300px; object-fit: contain;">
+                            <h1 class="text-primary fw-bold mb-4">Welcome to Our POS System</h1>
+                            <p class="lead text-muted mb-4">
+                                Streamline your business operations with our modern point of sale solution.
+                                Secure, fast, and efficient.
+                            </p>
+                            <div class="corporate-features">
+                                <div class="feature-item mb-3">
+                                    <i class="fas fa-shield-alt text-primary me-2"></i>
+                                    <span>Enterprise-grade security</span>
+                                </div>
+                                <div class="feature-item mb-3">
+                                    <i class="fas fa-tachometer-alt text-primary me-2"></i>
+                                    <span>Lightning-fast transactions</span>
+                                </div>
+                                <div class="feature-item mb-3">
+                                    <i class="fas fa-chart-line text-primary me-2"></i>
+                                    <span>Real-time analytics</span>
+                                </div>
                             </div>
+                        </div>
+                        <footer class="text-muted">
+                            <small>&copy; 2024 Your Company. All rights reserved.</small>
+                        </footer>
+                    </div>
+                </div>
 
-                            <!-- Vue PIN Login Component -->
+                <!-- Right Side - Login Component -->
+                <div class="col-md-7 bg-white">
+                    <div class="d-flex align-items-center h-100">
+                        <div class="w-100 p-4">
                             <pin-login-component></pin-login-component>
                         </div>
                     </div>
@@ -41,6 +67,27 @@
             </div>
         </div>
     </div>
+
+    <style>
+        .authentication-bg {
+            background-color: #f8f9fa;
+        }
+        
+        .corporate-features .feature-item {
+            display: flex;
+            align-items: center;
+            font-size: 1.1rem;
+            color: #495057;
+        }
+
+        .bg-primary-subtle {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+
+        .min-vh-100 {
+            min-height: 100vh;
+        }
+    </style>
 
     <!-- Vendor js -->
     <script src="{{ asset('assets/js/vendor.min.js') }}"></script>
