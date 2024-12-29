@@ -4,6 +4,12 @@
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h4 class="header-title">Payment Summary</h4>
         <div class="d-flex gap-2">
+          <select v-model="dateFilter" class="form-select form-select-sm" style="width: 150px">
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="month">This Month</option>
+            <option value="year">This Year</option>
+          </select>
           <input 
             type="text" 
             v-model="search" 
@@ -62,12 +68,15 @@ export default {
   data() {
     return {
       search: '',
-      sortOrder: 'desc'
+      sortOrder: 'desc',
+      dateFilter: 'all'
     }
   },
   computed: {
     filteredAndSortedPayments() {
-      let filtered = this.payments.filter(payment => 
+      let filtered = this.filterByDate(this.payments);
+      
+      filtered = filtered.filter(payment => 
         payment.payment_method.toLowerCase().includes(this.search.toLowerCase())
       );
       
@@ -85,6 +94,32 @@ export default {
     }
   },
   methods: {
+    filterByDate(payments) {
+      const today = new Date();
+      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const startOfYear = new Date(today.getFullYear(), 0, 1);
+
+      switch (this.dateFilter) {
+        case 'today':
+          return payments.filter(payment => {
+            const paymentDate = new Date(payment.created_at);
+            return paymentDate >= startOfDay;
+          });
+        case 'month':
+          return payments.filter(payment => {
+            const paymentDate = new Date(payment.created_at);
+            return paymentDate >= startOfMonth;
+          });
+        case 'year':
+          return payments.filter(payment => {
+            const paymentDate = new Date(payment.created_at);
+            return paymentDate >= startOfYear;
+          });
+        default:
+          return payments;
+      }
+    },
     formatNumber(number) {
       return parseFloat(number).toLocaleString('en-US', {
         minimumFractionDigits: 2,

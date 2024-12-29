@@ -9,10 +9,19 @@
 
     @php
 $date =date('d-F-Y');
-$payments = App\Models\Order::select('payment_method', DB::raw('count(*) as count'), DB::raw('sum(pay) as total'))
+$payments = App\Models\Order::select(
+    'payment_method',
+    DB::raw('count(*) as count'),
+    DB::raw('sum(pay) as total'),
+    DB::raw('DATE(created_at) as date')
+)
     ->whereNotNull('payment_method')
-    ->groupBy('payment_method')
-    ->get();
+    ->groupBy(['payment_method', DB::raw('DATE(created_at)')])  // Add DATE(created_at) to group by
+    ->get()
+    ->map(function($payment) {
+        $payment->created_at = $payment->date;
+        return $payment;
+    });
 $today_paid = App\Models\Order::where('order_date', $date)->sum('pay');
 $todays_sales = App\Models\Order::where('order_date', $date);
 $total_paid = App\Models\Order::sum('pay');
