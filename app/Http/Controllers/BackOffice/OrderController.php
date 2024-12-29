@@ -258,6 +258,7 @@ class OrderController extends Controller
             'payment_status' => 'pending', // Payment status (can be updated later)
             'pay' => $request->paying_amount,
             'due' => $request->total_price - $request->paying_amount, // Calculate due amount
+           'payment_method' => $request->payment_method,
             'invoice_no' => strtoupper(uniqid('INV')) // Generate a random invoice number
         ]);
 

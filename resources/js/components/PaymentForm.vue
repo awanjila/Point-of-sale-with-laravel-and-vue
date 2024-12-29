@@ -21,7 +21,7 @@
                 v-model="receivedAmount"
                 id="receivedAmount"
                 class="form-control"
-                placeholder="Enter received amount"
+                :placeholder="'Enter amount (Ksh ' + totalPrice + ')'"
                 required
               />
             </div>
@@ -31,17 +31,6 @@
               <p class="form-control-static">{{ changeReturn }}</p>
             </div>
           </div>
-
-          <div class="form-right">
-            <div class="form-group">
-              <label for="paymentChoice">Payment Method:</label>
-              <select v-model="paymentChoice" id="paymentChoice" class="form-control">
-                <option value="cash">Cash</option>
-                <option value="mpesa">M-Pesa</option>
-                <option value="card">Card</option>
-              </select>
-            </div>
-          </div>
         </div>
 
         <div class="form-group full-width">
@@ -49,7 +38,39 @@
           <textarea v-model="paymentNotes" id="paymentNotes" class="form-control payment-notes"></textarea>
         </div>
 
-        <button @click="submitPayment" class="btn btn-primary" :disabled="loading">
+        <div class="payment-methods">
+          <label>Payment Method:</label>
+          <div class="payment-buttons">
+            <button 
+              @click="paymentChoice = 'cash'"
+              :class="['btn', 'payment-btn']"
+            >
+              Cash
+            </button>
+            <button 
+              @click="paymentChoice = 'mpesa'"
+              :class="['btn', 'payment-btn']"
+            >
+              <img 
+                src="https://siliconafrica.org/wp-content/uploads/2024/02/MPESA.webp" 
+                alt="M-Pesa" 
+                class="mpesa-logo"
+              />
+            </button>
+            <button 
+              @click="paymentChoice = 'card'"
+              :class="['btn', 'payment-btn']"
+            >
+              Card
+            </button>
+          </div>
+        </div>
+
+        <button 
+          @click="submitPayment" 
+          class="btn btn-primary" 
+          :disabled="loading || !isFormValid"
+        >
           <span v-if="loading">Processing...</span>
           <span v-else>Submit Order</span>
         </button>
@@ -98,7 +119,7 @@ export default {
   data() {
     return {
       receivedAmount: this.totalPrice,
-      paymentChoice: 'cash',
+      paymentChoice: '',
       paymentNotes: '',
       loading: false,
       showReceipt: false,
@@ -114,6 +135,13 @@ export default {
     },
     async submitPayment() {
       const toast = useToast();
+
+      // Validate payment method
+      if (!this.paymentChoice) {
+        toast.error('Please select a payment method');
+        return;
+      }
+
       const cartStore = useCartStore();
       this.cart = cartStore.cart;
 
@@ -170,6 +198,11 @@ export default {
     receivedAmount(newVal) {
       this.changeReturn = (newVal - this.totalPrice).toFixed(2);
     },
+  },
+  computed: {
+    isFormValid() {
+      return this.paymentChoice && this.receivedAmount >= this.totalPrice;
+    }
   },
 };
 </script>
@@ -237,6 +270,51 @@ export default {
   cursor: pointer;
   width: 100%;
   margin-top: 20px;
+}
+
+.btn-primary:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
+}
+
+.payment-methods {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.payment-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.payment-btn {
+  flex: 1;
+  padding: 10px;
+  border: 2px solid #ccc;
+  background-color: #f4f4f4;
+  color: #333;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.payment-btn .mpesa-logo {
+  max-height: 30px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.payment-btn:hover {
+  background-color: #e0e0e0;
+  border-color: #999;
+}
+
+.payment-btn:focus {
+  outline: 2px solid #c02323;
+  outline-offset: 2px;
 }
 
 .btn-primary:disabled {

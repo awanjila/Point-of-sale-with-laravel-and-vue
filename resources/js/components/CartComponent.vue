@@ -102,7 +102,11 @@
       <!-- Button Container -->
       <div class="button-container">
         <button @click="resetCart" class="btn btn-warning">Reset</button>
-        <button @click="openPaymentModal" class="btn btn-success">Order</button>
+        <button 
+          @click="openPaymentModal" 
+          class="btn btn-success"
+          :disabled="totalItems === 0"
+        >Order</button>
         <!-- <button @click="holdDraft" class="btn btn-info">Hold</button> -->
       </div>
     </div>

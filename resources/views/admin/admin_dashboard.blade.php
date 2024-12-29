@@ -9,6 +9,10 @@
 
     @php
 $date =date('d-F-Y');
+$payments = App\Models\Order::select('payment_method', DB::raw('count(*) as count'), DB::raw('sum(pay) as total'))
+    ->whereNotNull('payment_method')
+    ->groupBy('payment_method')
+    ->get();
 $today_paid = App\Models\Order::where('order_date', $date)->sum('pay');
 $todays_sales = App\Models\Order::where('order_date', $date);
 $total_paid = App\Models\Order::sum('pay');
@@ -454,6 +458,12 @@ $hotProducts = App\Models\Product::where('sales_count', '>', 0)
             </div> <!-- end col -->
         </div>
         <!-- end row -->
+
+        <div class="row" id="app">
+            <div class="col-12">
+                <payment-summary-table :payments='@json($payments)'></payment-summary-table>
+            </div>
+        </div>
 
     </div> <!-- container -->
 

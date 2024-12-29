@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('total')->nullable();
             $table->string('vat')->nullable();
             $table->string('payment_status')->nullable();
+            $table->string('payment_method');
             $table->string('pay')->nullable();
             $table->string('due')->nullable();
             $table->timestamps();

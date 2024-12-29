@@ -29,6 +29,7 @@ import Cart from './components/CartComponent.vue';
 import PosDashboard from './components/PosDashboard.vue';
 import PinLoginComponent from './components/PinLoginComponent.vue';
 import SettingsComponent from './components/SettingsComponent.vue';
+import PaymentSummaryTable from './components/PaymentSummaryTable.vue'
 
 // Export Vue and related libraries globally
 // window.Vue = {
@@ -50,6 +51,7 @@ const app = createApp({
     PosDashboard,  // Registers the PosDashboard component
     PinLoginComponent,
     SettingsComponent,
+    PaymentSummaryTable,
   }
 });
 
