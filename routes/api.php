@@ -8,6 +8,9 @@ use App\Http\Controllers\BackOffice\CartController;
 use App\Http\Controllers\BackOffice\CustomerController;
 use App\Http\Controllers\BackOffice\OrderController;
 use App\Http\Controllers\BackOffice\SettingController;
+use App\Http\Controllers\BackOffice\SupplierController;
+use App\Http\Controllers\BackOffice\ProductController;
+use App\Http\Controllers\BackOffice\PurchaseController;
 
 
 Route::get('/pos/products', [POSController::class, 'getProducts']);
@@ -23,6 +26,12 @@ Route::get('/order/{id}/details', [OrderController::class, 'getOrderDetailsById'
 
 Route::get('/settings', [SettingController::class, 'getSettings']);
 Route::post('/settings', [SettingController::class, 'updateSettings']);
+
+// Purchase API Routes
+    Route::post('/purchases', [PurchaseController::class, 'StorePurchase']);
+    Route::get('/suppliers', [SupplierController::class, 'index']);
+    Route::get('/products', [ProductController::class, 'index']);
+
 
 
 

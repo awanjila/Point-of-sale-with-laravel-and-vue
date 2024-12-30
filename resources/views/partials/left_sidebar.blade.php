@@ -200,6 +200,8 @@
     </div>
     </li>
 
+
+
 {{--    @if(Auth::user()->can(' product.menu'))--}}
         <li>
        <a href="#product" data-bs-toggle="collapse">
@@ -234,6 +236,44 @@
    </div>
    </li>
 {{--                    @endif--}}
+
+  
+
+{{--    @if(Auth::user()->can(' product.menu'))--}}
+        <li>
+       <a href="#purchase" data-bs-toggle="collapse">
+       <i class="fa fa-briefcase "></i>
+       <span> Purchase Management </span>
+       <span class="menu-arrow"></span>
+       </a>
+       <div class="collapse" id="purchase">
+           <ul class="nav-second-level">
+
+{{--               @if(Auth::user()->can(' product.all'))--}}
+
+               <li>
+                  <a href="{{route('all.purchase')}}">All Purchase</a>
+               </li>
+
+{{--               @endif--}}
+
+               {{--               @if(Auth::user()->can(' product.all'))--}}
+
+               <li>
+                   <a href="{{route('purchase.add')}}">Add Purchase</a>
+               </li>
+
+               {{--               @endif--}}
+           </ul>
+   </div>
+   </li>
+{{--                    @endif--}}
+
+
+
+
+
+
         @if(Auth::user()->can('order.menu'))
             <li>
                 <a href="#order" data-bs-toggle="collapse"><i class="fa fa-briefcase sm "></i><span> Order Management </span><span class="menu-arrow"></span></a>

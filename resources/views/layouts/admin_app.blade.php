@@ -11,10 +11,12 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <!-- App favicon -->
     <link rel="shortcut icon" href="assets/images/favicon.ico">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- Plugins css -->
     @include('partials.styles')
     @vite('resources/js/app.js')
+    <link rel="stylesheet" href="{{ mix('css/app.css') }}">
 </head>
 
 <!-- body start -->
@@ -86,6 +88,8 @@
     }
     @endif
 </script>
+
+@routes
 
 </body>
 </html>

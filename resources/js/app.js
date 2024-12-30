@@ -30,6 +30,7 @@ import PosDashboard from './components/PosDashboard.vue';
 import PinLoginComponent from './components/PinLoginComponent.vue';
 import SettingsComponent from './components/SettingsComponent.vue';
 import PaymentSummaryTable from './components/PaymentSummaryTable.vue'
+import AddPurchaseComponent from './components/purchase/AddPurchaseComponent.vue'
 
 // Export Vue and related libraries globally
 // window.Vue = {
@@ -52,6 +53,7 @@ const app = createApp({
     PinLoginComponent,
     SettingsComponent,
     PaymentSummaryTable,
+    AddPurchaseComponent,
   }
 });
 
@@ -61,8 +63,32 @@ app.component('font-awesome-icon', FontAwesomeIcon);
 // Use Pinia store with Vue app
 app.use(pinia);
 
-// Use Toast plugin with Vue app
-app.use(Toast);
+// Use Vue Toastification
+app.use(Toast, {
+    position: "top-right",
+    timeout: 3000,
+    closeOnClick: true,
+    pauseOnFocusLoss: true,
+    pauseOnHover: true,
+    draggable: true,
+    draggablePercent: 0.6,
+});
+
+// Register the component
+app.component('add-purchase-component', AddPurchaseComponent)
 
 // Mount the Vue app to the element with ID "app"
 app.mount('#app');
+
+import axios from 'axios';
+
+// Set up axios defaults
+window.axios = axios;
+window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+window.axios.defaults.withCredentials = true;
+
+// Add CSRF token to all requests if available
+const token = document.head.querySelector('meta[name="csrf-token"]');
+if (token) {
+    window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token.content;
+}

@@ -223,6 +223,14 @@ public function ExpiredProducts(){
         ->get();
 
     return view('backoffice.product.hot-products', compact('hotProducts'));
-}
+} //endmethod
+
+public function index(){
+
+    $products = Product::all();
+
+    return response()->json($products);
+
+}//endmethod
 
 }

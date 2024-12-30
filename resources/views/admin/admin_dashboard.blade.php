@@ -12,7 +12,7 @@ $date =date('d-F-Y');
 $payments = App\Models\Order::select(
     'payment_method',
     DB::raw('count(*) as count'),
-    DB::raw('sum(pay) as total'),
+    DB::raw('sum(sub_total) as total'),
     DB::raw('DATE(created_at) as date')
 )
     ->whereNotNull('payment_method')

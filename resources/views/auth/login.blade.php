@@ -29,7 +29,7 @@
                 <div class="col-md-5 bg-primary-subtle">
                     <div class="d-flex flex-column h-100 p-5">
                         <div class="my-auto">
-                            <img src="/assets/images/logo-dark.png" alt="logo" class="mb-5" height="80" style="max-width: 300px; object-fit: contain;">
+                            <img src="/assets/images/logo-dark.png" alt="logo" class="mb-5" height="100" style="max-width: 350px; object-fit: contain;">
                             <h1 class="text-primary fw-bold mb-4">Welcome to Our POS System</h1>
                             <p class="lead text-muted mb-4">
                                 Streamline your business operations with our modern point of sale solution.

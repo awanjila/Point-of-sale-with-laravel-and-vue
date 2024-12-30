@@ -148,5 +148,13 @@ class SupplierController extends Controller
         );
 
         return redirect()->back()->with($notification);
-    }
+    }//endmethod
+
+    public function index(){
+
+        $suppliers = Supplier::all();
+
+        return response()->json($suppliers);
+
+    }//endmethod
 }

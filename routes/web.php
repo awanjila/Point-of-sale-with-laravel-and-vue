@@ -10,6 +10,7 @@ use App\Http\Controllers\GeoLocationController;
 use App\Http\Controllers\BackOffice\AttendanceController;
 use App\Http\Controllers\BackOffice\CategoryController;
 use App\Http\Controllers\BackOffice\ProductController;
+use App\Http\Controllers\BackOffice\PurchaseController;
 use App\Http\Controllers\BackOffice\ExpenseController;
 use App\Http\Controllers\BackOffice\POSController;
 use App\Http\Controllers\BackOffice\OrderController;
@@ -31,6 +32,14 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+
+
+//All Product Route
+// Route::controller(PurchaseController::class)->group(function(){
+//     Route::get('all/purchase', 'AllPurchase')->name('all.purchase')->middleware('permission:product.all');
+//     Route::get('add/purchase', 'AddPurchase')->name('purchase.add')->middleware('permission:product.add');
+    
+// })->middleware(['auth', 'verified']);
 
 //Settings Controller
 Route::controller(SettingController::class)->group(function(){
@@ -188,13 +197,6 @@ Route::controller(ProductController::class)->group(function(){
     Route::get('expired/products', 'ExpiredProducts')->name('expired_products');
     Route::get('hot/products', 'GetHotProducts')->name('hot.products');
     Route::post('import', 'Import')->name('import');
-
-
-
-
-
-
-
 })->middleware(['auth', 'verified']);
 
 //All Expense Route
@@ -320,6 +322,15 @@ Route::controller(PrinterController::class)->group(function(){
 Route::get('/settings', function () {
     return view('settings');
 })->name('get.settings')->middleware(['auth', 'verified']);
+
+// Purchase Routes
+Route::middleware(['auth'])->group(function () {
+    Route::controller(PurchaseController::class)->group(function () {
+        Route::get('purchases', 'AllPurchase')->name('all.purchase');
+        Route::get('/add/purchase', 'AddPurchase')->name('purchase.add');
+        Route::post('/store-purchase', 'StorePurchase')->name('store.purchase');
+    });
+});
 
 
 
