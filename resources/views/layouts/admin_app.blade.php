@@ -17,6 +17,8 @@
     @include('partials.styles')
     @vite('resources/js/app.js')
     <link rel="stylesheet" href="{{ mix('css/app.css') }}">
+
+    @routes
 </head>
 
 <!-- body start -->

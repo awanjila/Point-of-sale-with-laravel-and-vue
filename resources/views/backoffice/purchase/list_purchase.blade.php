@@ -1,11 +1,11 @@
 @extends('layouts.admin_app')
 
 @section('title')
-   Add Product
+   Purchase List
 @endsection
 
 @section('content')
-
-List All Purchases Here
-
+<div id="app">
+    <purchase-list-component></purchase-list-component>
+</div>
 @endsection

@@ -31,6 +31,8 @@ import PinLoginComponent from './components/PinLoginComponent.vue';
 import SettingsComponent from './components/SettingsComponent.vue';
 import PaymentSummaryTable from './components/PaymentSummaryTable.vue'
 import AddPurchaseComponent from './components/purchase/AddPurchaseComponent.vue'
+import PurchaseListComponent from './components/purchase/PurchaseListComponent.vue'
+import ViewPurchaseComponent from './components/purchase/ViewPurchaseComponent.vue'
 
 // Export Vue and related libraries globally
 // window.Vue = {
@@ -54,6 +56,8 @@ const app = createApp({
     SettingsComponent,
     PaymentSummaryTable,
     AddPurchaseComponent,
+    PurchaseListComponent,
+    ViewPurchaseComponent,
   }
 });
 

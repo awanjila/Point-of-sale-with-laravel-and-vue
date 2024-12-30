@@ -9,9 +9,20 @@ use App\Models\Product;
 use App\Models\PurchaseItem;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Models\Setting;
+use Illuminate\Support\Facades\Log;
 
 class PurchaseController extends Controller
 {
+    // Common purchase statuses and their meanings
+    public static $STATUSES = [
+        'pending' => 'Order created but not yet received',
+        'received' => 'Products have been received',
+        'completed' => 'Purchase order fully processed and closed',
+        'cancelled' => 'Purchase order was cancelled',
+        'returned' => 'Products were returned to supplier'
+    ];
+
     public function AllPurchase(){
         $purchases = Purchase::latest()->get();
         return view('backoffice.purchase.list_purchase',compact('purchases'));
@@ -123,5 +134,164 @@ class PurchaseController extends Controller
         $number = sprintf('%03d', $string + 1);
         
         return 'PUR-' . date('Ymd') . $number;
+    }
+
+    public function GetPurchases()
+    {
+        try {
+            // Get currency from the settings table using the new structure
+            try {
+                $settings = Setting::first();
+                $currencySymbol = $settings ? $settings->currency : 'KES'; // Default to KES if no settings
+            } catch (\Exception $e) {
+                Log::error('Error fetching currency setting: ' . $e->getMessage());
+                $currencySymbol = 'KES'; // Fallback currency
+            }
+
+            $purchases = Purchase::with('supplier')
+                ->latest()
+                ->get()
+                ->map(function ($purchase) use ($currencySymbol) {
+                    return [
+                        'id' => $purchase->id,
+                        'purchase_no' => $purchase->purchase_no,
+                        'purchase_date' => $purchase->purchase_date,
+                        'supplier' => [
+                            'id' => $purchase->supplier->id ?? null,
+                            'name' => $purchase->supplier->name ?? 'N/A'
+                        ],
+                        'total_products' => $purchase->total_products,
+                        'total_amount' => $purchase->total_amount,
+                        'currency' => $currencySymbol,
+                        'payment_status' => $purchase->payment_status,
+                        'paid_amount' => $purchase->paid_amount,
+                        'due_amount' => $purchase->due_amount,
+                        'status' => $purchase->status,
+                    ];
+                });
+
+            return response()->json([
+                'purchases' => $purchases,
+                'currency' => $currencySymbol
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error in GetPurchases: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error fetching purchases: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // You can add a method to update the status
+    public function UpdatePurchaseStatus(Request $request, $id)
+    {
+        try {
+            $purchase = Purchase::findOrFail($id);
+            
+            $request->validate([
+                'status' => 'required|in:pending,received,completed,cancelled,returned'
+            ]);
+
+            $purchase->update([
+                'status' => $request->status
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Purchase status updated successfully',
+                'purchase' => $purchase
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error updating purchase status: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function ShowPurchase($id)
+    {
+        try {
+            $purchase = Purchase::with(['supplier', 'items.product'])
+                ->findOrFail($id);
+
+            $settings = Setting::first();
+            $currency = $settings ? $settings->currency : 'KES';
+
+            return response()->json([
+                'purchase' => $purchase,
+                'currency' => $currency
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error fetching purchase details: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function CompletePurchase($id)
+    {
+        try {
+            $purchase = Purchase::findOrFail($id);
+            
+            if ($purchase->status !== 'pending') {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Only pending purchases can be completed'
+                ], 400);
+            }
+
+            $purchase->update(['status' => 'completed']);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Purchase marked as completed',
+                'purchase' => $purchase
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error completing purchase: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function DeletePurchase($id)
+    {
+        try {
+            $purchase = Purchase::findOrFail($id);
+            
+            // Don't allow deletion of completed purchases
+            if ($purchase->status === 'completed') {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Completed purchases cannot be deleted'
+                ], 400);
+            }
+
+            $purchase->delete();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Purchase deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error deleting purchase: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function ViewPurchase($id)
+    {
+        return view('backoffice.purchase.view_purchase', compact('id'));
     }
 }

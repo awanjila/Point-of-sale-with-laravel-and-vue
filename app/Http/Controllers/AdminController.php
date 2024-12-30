@@ -254,12 +254,12 @@ if($request->roles){
     }
 
 
-    public function DownloadDataBase($getFileName){
+    // public function DownloadDataBase($getFileName){
 
-        $path = storage_path('app\WabeGadgets/'.$getFileName);
-        return response()->download($path);
+    //     $path = storage_path('app\WabeGadgets/'.$getFileName);
+    //     return response()->download($path);
 
-    }
+    // }
 
 
     public function DeleteDataBase($getFileName){

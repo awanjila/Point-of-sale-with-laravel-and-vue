@@ -30,7 +30,15 @@ Route::post('/settings', [SettingController::class, 'updateSettings']);
 // Purchase API Routes
     Route::post('/purchases', [PurchaseController::class, 'StorePurchase']);
     Route::get('/suppliers', [SupplierController::class, 'index']);
-    Route::get('/products', [ProductController::class, 'index']);
+    Route::get('/products', [ProductController::class, 'index']);    // Add new route for fetching purchases
+    Route::get('/purchases', [PurchaseController::class, 'GetPurchases']);
+    Route::patch('/purchases/{id}/status', [PurchaseController::class, 'UpdatePurchaseStatus']);
+    // New routes for actions
+    Route::get('/purchases/{id}', [PurchaseController::class, 'ShowPurchase']);
+    Route::patch('/purchases/{id}/complete', [PurchaseController::class, 'CompletePurchase']);
+    Route::delete('/purchases/{id}', [PurchaseController::class, 'DeletePurchase']);
+
+
 
 
 

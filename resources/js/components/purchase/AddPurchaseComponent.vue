@@ -307,15 +307,12 @@ export default {
                 const response = await axios.post('/api/purchases', purchaseData);
                 
                 if (response && response.data) {
-                    // Using the toast from setup()
                     this.toast.success("Purchase created successfully!");
-
-                    // Reset the form
                     this.resetForm();
                     
-                    // Optional: Redirect after a short delay
+                    // Use route() helper for redirection
                     setTimeout(() => {
-                        window.location.href = '/purchases';
+                        window.location.href = route('all.purchase');
                     }, 2000);
                 }
                 

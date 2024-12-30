@@ -308,7 +308,7 @@ Route::controller(AdminController::class)->group(function(){
     ///////////////////////////////Database Back Routes/////////////////////////////////
     Route::get('database/backup', 'DataBaseBkp')->name('database.backup');
     Route::get('backup/now', 'DataBaseBkpNow');
-    Route::get('{getFileName}', 'DownloadDataBase');
+    // Route::get('{getFileName}', 'DownloadDataBase');
     Route::get('delete/database/{getFileName}', 'DeleteDataBase');
 
 })->middleware(['auth', 'verified']);
@@ -331,6 +331,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/store-purchase', 'StorePurchase')->name('store.purchase');
     });
 });
+
+Route::get('/purchases/{id}', [PurchaseController::class, 'ViewPurchase'])->name('view.purchase');
 
 
 
