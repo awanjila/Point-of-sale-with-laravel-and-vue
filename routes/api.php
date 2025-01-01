@@ -13,13 +13,14 @@ use App\Http\Controllers\BackOffice\ProductController;
 use App\Http\Controllers\BackOffice\PurchaseController;
 
 
+
 Route::get('/pos/products', [POSController::class, 'getProducts']);
 Route::get('/pos/categories', CategoryController::class);
 Route::get('/pos/customers', CustomerController::class);
 // Route::get('/cart-items', CartController::class);
 
 Route::post('/customers', [CustomerController::class, 'store']);
-Route::post('/orders', [OrderController::class, 'createOrder']);
+Route::post('/orders', [OrderController::class, 'StoreOrder']);
 Route::get('/order/{id}', [OrderController::class, 'getOrderById']);
 
 Route::get('/order/{id}/details', [OrderController::class, 'getOrderDetailsById']);
@@ -37,6 +38,24 @@ Route::post('/settings', [SettingController::class, 'updateSettings']);
     Route::get('/purchases/{id}', [PurchaseController::class, 'ShowPurchase']);
     Route::patch('/purchases/{id}/complete', [PurchaseController::class, 'CompletePurchase']);
     Route::delete('/purchases/{id}', [PurchaseController::class, 'DeletePurchase']);
+
+    Route::controller(OrderController::class)->group(function () {
+        // Get all orders
+        Route::get('/orders', 'GetOrders');
+        
+        // Get single order
+        Route::get('/orders/{id}', 'ShowOrder');
+        
+        // Complete order
+        Route::patch('/orders/{id}/complete', 'CompleteOrder');
+        
+        // Delete order
+        Route::delete('/orders/{id}', 'DeleteOrder');
+        
+        // Store new order
+        Route::post('/orders', 'StoreOrder');
+    });
+
 
 
 

@@ -33,6 +33,8 @@ import PaymentSummaryTable from './components/PaymentSummaryTable.vue'
 import AddPurchaseComponent from './components/purchase/AddPurchaseComponent.vue'
 import PurchaseListComponent from './components/purchase/PurchaseListComponent.vue'
 import ViewPurchaseComponent from './components/purchase/ViewPurchaseComponent.vue'
+import OrderListComponent from './components/order/OrderListComponent.vue'
+import ViewOrderComponent from './components/order/ViewOrderComponent.vue'
 
 // Export Vue and related libraries globally
 // window.Vue = {
@@ -58,6 +60,8 @@ const app = createApp({
     AddPurchaseComponent,
     PurchaseListComponent,
     ViewPurchaseComponent,
+    OrderListComponent,
+    ViewOrderComponent,
   }
 });
 

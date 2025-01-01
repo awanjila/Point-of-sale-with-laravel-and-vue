@@ -172,7 +172,7 @@ export default {
                 }
 
                 await axios.patch(`/api/purchases/${purchase.id}/complete`);
-                this.toast.success('Purchase marked as completed');
+                this.toast.success('Purchase marked as completed and Stock updated successfully');
                 await this.fetchPurchases(); // Refresh the list
             } catch (error) {
                 this.toast.error(error.response?.data?.message || 'Error completing purchase');

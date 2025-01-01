@@ -1,395 +1,335 @@
 <template>
-  <div class="receipt-wrapper">
-    <!-- Close button -->
-    <button class="close-btn no-print" @click="$emit('close')">×</button>
-
-    <div class="receipt-container" v-if="orderDetails && settings">
-      <!-- Header Section -->
-      <div class="receipt-header">
-        <h1 class="company-name">{{ settings.business_name || 'Wabe Point' }}</h1>
-        <!-- <p class="sub-header">Pos/Inventory System</p> -->
-        <p>{{ settings.business_address || 'Parklands 3rd Avenue' }}</p>
-        <p>TEL: {{ settings.business_phone || '0710909198, 0781312070' }}</p>
-        <p v-if="settings.till_number">Till Number: {{ settings.till_number }}</p>
+  <div class="receipt" ref="receipt">
+    <div v-if="loading" class="receipt-loading">
+      <div class="spinner"></div>
+      <p>Generating Receipt...</p>
+    </div>
+    
+    <div v-else-if="error" class="receipt-error">
+      <p>{{ error }}</p>
+      <button @click="$emit('close')">Close</button>
+    </div>
+    
+    <div v-else class="receipt-content">
+      <!-- Company Info -->
+      <div class="company-info">
+        <h2>{{ mergedUserData.company_name }}</h2>
+        <p>{{ mergedUserData.address }}</p>
+        <p>Tel: {{ mergedUserData.phone }}</p>
+        <p>Email: {{ mergedUserData.email }}</p>
       </div>
 
-      <!-- Receipt Info -->
-      <div class="receipt-info">
-        <div class="receipt-no">
-          <strong>#{{ orderDetails?.invoice_no || 'N/A' }}</strong>
-        </div>
-        <div class="receipt-type">CASH SALE</div>
-        <div class="receipt-details">
-          <span>{{ orderDetails.order_date || new Date().toLocaleDateString() }}</span> <br>
-          <span>{{ orderDetails.customer ? orderDetails.customer.name : 'walk-in-customer' }}</span>
-        </div>
+      <!-- Receipt Details -->
+      <div class="receipt-details">
+        <p><strong>Receipt No:</strong> {{ orderId }}</p>
+        <p><strong>Date:</strong> {{ currentDate }}</p>
+        <p><strong>Payment Method:</strong> {{ paymentMethod }}</p>
       </div>
 
-      <div class="divider"></div>
+      <!-- Order Items -->
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in orderItems" :key="item.id">
+            <td>{{ item.product?.product_name || item.name }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ formatPrice(item.unit_cost || item.unit_price) }}</td>
+            <td>{{ formatPrice(item.total) }}</td>
+          </tr>
+        </tbody>
+      </table>
 
-      <!-- Products Table Header -->
-      <div class="products-header">
-        <div class="product-name">Item</div>
-        <div class="qty-price">Qty×Price</div>
-        <div class="total">Total</div>
+      <!-- Totals -->
+      <div class="totals">
+        <p><strong>Subtotal:</strong> {{ formatPrice(subtotal) }}</p>
+        <p><strong>VAT (16%):</strong> {{ formatPrice(vat) }}</p>
+        <p><strong>Total:</strong> {{ formatPrice(total) }}</p>
+        <p><strong>Amount Paid:</strong> {{ formatPrice(receivedAmount) }}</p>
+        <p><strong>Change:</strong> {{ formatPrice(changeReturn) }}</p>
       </div>
 
-      <!-- Products List -->
-      <div class="products-list">
-        <div v-for="item in cartItems" :key="item.product_name" class="product-item">
-          <div class="product-name">{{ item.product_name }}</div>
-          <div class="qty-price">{{ item.quantity }}×{{ Number(item.selling_price).toFixed(2) }}</div>
-          <div class="total">{{ Number(item.total).toFixed(2) }}</div>
-        </div>
-      </div>
-
-      <div class="divider"></div>
-
-      <!-- Summary Section -->
-      <div class="summary-section">
-        <div class="summary-row">
-          <span>Tax ({{ settings.tax_percentage || '0.00' }}%)</span>
-          <span>{{ Number(orderDetails.vat || 0).toFixed(2) }}</span>
-        </div>
-        <div class="summary-row">
-          <span>Discount</span>
-          <span>{{ Number(orderDetails.discount || 0).toFixed(2) }}</span>
-        </div>
-        <div class="summary-row total">
-          <strong>Grand Total</strong>
-          <strong>{{ Number(orderDetails.total || cartItems.reduce((sum, item) => sum + item.total, 0)).toFixed(2) }} {{ settings.currency || 'KES' }}</strong>
-        </div>
-      </div>
-
-      <div class="divider"></div>
-
-      <!-- Payment Info -->
-      <div class="payment-info">
-        <div class="payment-row">
-          <span>Paid By</span>
-          <span>{{ paymentMethod || orderDetails.payment_method || 'cash' }}</span>
-        </div>
-        <div class="payment-row">
-          <span>Amount Paid</span>
-          <span>{{ Number(receivedAmount || orderDetails.amount_paid || 0).toFixed(2) }}</span>
-        </div>
-        <div class="payment-row">
-          <span>Change</span>
-          <span>{{ Number(changeReturn || orderDetails.change_return || 0).toFixed(2) }}</span>
-        </div>
-      </div>
-
-      <div class="divider"></div>
-
-      <!-- Receipt Header/Footer -->
-      <div class="receipt-custom-text">
-        <p v-if="settings.receipt_header" class="receipt-header-text">
-          {{ settings.receipt_header }}
-        </p>
-      </div>
-
-      <!-- Footer Section -->
+      <!-- Footer -->
       <div class="receipt-footer">
-        <p class="served-by">Served by: {{ userData.name }}</p>
-        <p class="thank-you">{{ settings.receipt_footer || 'Thank You For Shopping With Us' }}</p>
-        <p class="footer-contact">System By: Wabe Point • {{ settings.business_phone || '0781312070' }}</p>
+        <p>Thank you for your business!</p>
+        <p>{{ mergedUserData.footer_message }}</p>
       </div>
     </div>
 
-    <!-- Loading State -->
-    <div v-else class="loading-state">
-      <p>Loading receipt...</p>
+    <!-- Print/Close Buttons -->
+    <div v-if="!loading && !error" class="receipt-actions">
+      <button @click="printReceipt" class="btn btn-primary">Print Receipt</button>
+      <button @click="$emit('close')" class="btn btn-secondary">Close</button>
     </div>
-
-    <!-- Print Button -->
-    <button class="print-btn no-print" @click="printReceipt">
-      <i class="fa fa-print"></i> Print Receipt
-    </button>
   </div>
 </template>
 
 <script>
+import { ref, onMounted } from 'vue';
 import axios from 'axios';
-import { useCartStore } from './stores/cart';
 
 export default {
   props: {
     orderId: {
-      type: Number,
-      required: true,
+      type: [String, Number],
+      required: true
     },
     userData: {
       type: Object,
-      required: true,
+      default: () => ({})
     },
     paymentMethod: {
       type: String,
-      default: null
+      required: true
     },
     changeReturn: {
-      type: [Number, String],
-      default: null
+      type: [String, Number],
+      required: true
     },
     receivedAmount: {
-      type: [Number, String],
-      default: null
+      type: [String, Number],
+      required: true
     }
   },
-  data() {
-    return {
-      orderDetails: null,
-      settings: null,
-      cartStore: useCartStore()
-    };
-  },
-  mounted() {
-    this.fetchOrderDetails();
-    this.fetchSettings();
-  },
-  methods: {
-    async fetchOrderDetails() {
-      try {
-        const response = await axios.get(`/api/order/${this.orderId}/details`);
-        
-        console.log('Full Order Details Response:', response.data);
 
-        // Extract order details from the nested structure
-        if (response.data.success && response.data.data) {
-          this.orderDetails = {
-            ...response.data.data,
-            cart: response.data.cart || response.data.data.cart || []
-          };
+  setup(props) {
+    const orderItems = ref([]);
+    const subtotal = ref(0);
+    const vat = ref(0);
+    const total = ref(0);
+    const loading = ref(true);
+    const error = ref(null);
+    const currentDate = ref(new Date().toLocaleString());
+    const companySettings = ref({});
 
-          console.log('Processed Order Details:', this.orderDetails);
-        } else {
-          console.warn('Unexpected response structure:', response.data);
-          this.orderDetails = {
-            invoice_no: 'N/A',
-            cart: []
-          };
-        }
-
-        // Fallback for cart items if needed
-        if ((!this.orderDetails.cart || this.orderDetails.cart.length === 0) && this.cartStore.cart.length > 0) {
-          this.orderDetails.cart = this.cartStore.cart.map(item => ({
-            ...item,
-            selling_price: item.selling_price || item.unit_cost,
-            total: item.quantity * (item.selling_price || item.unit_cost)
-          }));
-        }
-      } catch (error) {
-        console.error('Error fetching order details:', error);
-        
-        this.orderDetails = {
-          invoice_no: 'N/A',
-          cart: this.cartStore.cart || [],
-          total: this.cartStore.cart.reduce((sum, item) => sum + (item.total || 0), 0)
-        };
-      }
-    },
-    async fetchSettings() {
+    const fetchCompanySettings = async () => {
       try {
         const response = await axios.get('/api/settings');
-        this.settings = response.data;
-      } catch (error) {
-        console.error('Error fetching settings:', error);
+        console.log('Settings response:', response.data);
+        
+        if (response.data.status === 'success') {
+          companySettings.value = response.data.settings;
+          console.log('Company settings:', companySettings.value);
+        } else {
+          console.error('Failed to fetch settings:', response.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch company settings:', err);
       }
-    },
-    printReceipt() {
+    };
+
+    const fetchOrderDetails = async () => {
+      try {
+        loading.value = true;
+        error.value = null;
+
+        // Fetch company settings first
+        await fetchCompanySettings();
+
+        const response = await axios.get(`/api/orders/${props.orderId}`);
+        
+        if (response.data.status === 'success' && response.data.order) {
+          const order = response.data.order;
+          
+          orderItems.value = order.order_details.map(detail => ({
+            id: detail.id,
+            name: detail.product?.product_name || 'Unknown Product',
+            quantity: detail.quantity,
+            unit_cost: parseFloat(detail.product?.selling_price || detail.unit_price || 0),
+            total: parseFloat(detail.total)
+          }));
+
+          subtotal.value = parseFloat(order.sub_total);
+          vat.value = parseFloat(order.vat);
+          total.value = parseFloat(order.total);
+        } else {
+          throw new Error('Unable to retrieve order details');
+        }
+      } catch (err) {
+        console.error('Failed to fetch order details:', err);
+        error.value = 'Failed to load receipt. Please try again.';
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const formatPrice = (price) => {
+      return `Ksh ${parseFloat(price).toFixed(2)}`;
+    };
+
+    const printReceipt = () => {
       window.print();
-    }
+    };
+
+    onMounted(() => {
+      fetchOrderDetails();
+    });
+
+    return {
+      orderItems,
+      subtotal,
+      vat,
+      total,
+      loading,
+      error,
+      currentDate,
+      formatPrice,
+      printReceipt,
+      companySettings
+    };
   },
+
   computed: {
-    cartItems() {
-      // Ensure cart items have selling_price and total
-      return (this.orderDetails?.cart || []).map(item => ({
-        ...item,
-        selling_price: item.selling_price || item.unit_cost,
-        total: item.quantity * (item.selling_price || item.unit_cost)
-      }));
+    mergedUserData() {
+      return {
+        company_name: this.companySettings.business_name || this.userData.company_name,
+        address: this.companySettings.business_address || this.userData.address,
+        phone: this.companySettings.business_phone || this.userData.phone,
+        email: this.companySettings.business_email || this.userData.email,
+        footer_message: this.companySettings.receipt_footer || 'Thank you for your business!'
+      };
     }
   }
 };
 </script>
 
 <style scoped>
-/* Receipt Wrapper */
-.receipt-wrapper {
-  position: relative;
-  height: 100vh;
+.receipt-loading, .receipt-error {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: #f5f5f5;
-  padding: 20px 0;
+  justify-content: center;
+  height: 300px;
+  text-align: center;
 }
 
-/* Receipt Container */
-.receipt-container {
-  width: 80mm; /* Thermal printer width */
+.spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #c02323;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.receipt {
   background: white;
-  padding: 10px;
+  padding: 20px;
+  max-width: 300px;
   margin: 0 auto;
+  font-family: 'Courier New', monospace;
+  display: flex;
+  flex-direction: column;
+  height: 80vh;
+  max-height: 80vh;
+  position: relative;
+}
+
+.receipt-content {
+  flex-grow: 1;
   overflow-y: auto;
-  max-height: calc(100vh - 120px); /* Account for print button */
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding-right: 10px;
 }
 
-/* Close Button */
-.close-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #666;
-  padding: 5px 10px;
+.receipt-actions {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
 }
 
-.close-btn:hover {
-  color: #333;
+.receipt-content::-webkit-scrollbar {
+  width: 6px;
 }
 
-/* Print Button */
-.print-btn {
-  position: fixed;
-  bottom: 20px;
-  padding: 12px 24px;
-  background: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+.receipt-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
 }
 
-.print-btn:hover {
-  background: #45a049;
+.receipt-content::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
 }
 
-/* Header Styles */
-.receipt-header {
+.receipt-content::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.receipt-actions {
+  z-index: 10;
+}
+
+.company-info {
   text-align: center;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
 }
 
-.company-name {
-  font-size: 20px;
-  font-weight: bold;
-  margin: 0;
+.company-info h2 {
+  margin-bottom: 5px;
 }
 
-.sub-header {
-  font-size: 12px;
-  color: #666;
-  margin: 4px 0;
+.receipt-details {
+  margin-bottom: 20px;
 }
 
-/* Receipt Info */
-.receipt-info {
-  text-align: center;
-  margin: 10px 0;
+.items-table {
+  width: 100%;
+  margin-bottom: 20px;
+  border-collapse: collapse;
 }
 
-.receipt-no {
-  font-size: 14px;
+.items-table th,
+.items-table td {
+  padding: 5px;
+  text-align: left;
+  border-bottom: 1px dashed #ccc;
 }
 
-.receipt-type {
-  font-weight: bold;
-  margin: 5px 0;
+.totals {
+  margin-bottom: 20px;
 }
 
-/* Products Table */
-.products-header {
-  display: grid;
-  grid-template-columns: 1.5fr 1fr 0.8fr;
-  font-size: 12px;
-  font-weight: bold;
-  padding: 5px 0;
-  border-bottom: 1px solid #eee;
-}
-
-.product-item {
-  display: grid;
-  grid-template-columns: 1.5fr 1fr 0.8fr;
-  font-size: 12px;
-  padding: 5px 0;
-}
-
-.product-name {
-  padding-right: 5px;
-}
-
-/* Summary Section */
-.summary-section, .payment-info {
-  font-size: 12px;
-}
-
-.summary-row, .payment-row {
+.totals p {
   display: flex;
   justify-content: space-between;
-  padding: 3px 0;
-}
-
-.summary-row.total {
-  font-size: 14px;
-  font-weight: bold;
-  margin-top: 5px;
-}
-
-/* Divider */
-.divider {
-  border-top: 1px dashed #ddd;
-  margin: 8px 0;
-}
-
-/* Footer */
-.receipt-footer {
-  text-align: center;
-  font-size: 12px;
-  margin-top: 10px;
-}
-
-.thank-you {
-  font-weight: bold;
   margin: 5px 0;
 }
 
-.footer-contact {
-  font-size: 10px;
-  color: #666;
-}
-
-/* Print-specific styles */
-@media print {
-  .no-print {
-    display: none !important;
-  }
-
-  .receipt-wrapper {
-    padding: 0;
-    height: auto;
-  }
-
-  .receipt-container {
-    box-shadow: none;
-    max-height: none;
-    width: 100%;
-  }
-}
-
-.receipt-custom-text {
+.receipt-footer {
   text-align: center;
-  margin: 10px 0;
-  font-style: italic;
-  color: #666;
+  margin-top: 20px;
+  padding-top: 10px;
+  border-top: 1px dashed #ccc;
 }
 
-.receipt-header-text {
-  font-size: 0.9em;
+@media print {
+  .receipt {
+    height: auto;
+    max-height: none;
+  }
+  
+  .receipt-content {
+    overflow-y: visible;
+  }
+  
+  .receipt-actions {
+    display: none;
+  }
 }
 </style>

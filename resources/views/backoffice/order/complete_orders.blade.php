@@ -2,7 +2,7 @@
 @extends('layouts.admin_app')
 
 @section('title')
-    Orders
+    Orders 1
 @endsection
 
 @section('content')

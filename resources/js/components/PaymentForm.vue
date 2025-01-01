@@ -79,12 +79,12 @@
       <!-- Display the receipt after payment -->
       <ReceiptPrint 
         v-if="showReceipt" 
-        :orderId="orderId" 
+        :orderId="orderId"
         :userData="userData"
         :paymentMethod="paymentChoice"
         :changeReturn="changeReturn"
         :receivedAmount="receivedAmount"
-        @close="closeReceipt" 
+        @close="closeReceipt"
       />
     </div>
   </ModalWrapper>
@@ -96,7 +96,10 @@ defineProps({
   showModal: Boolean,
   activeCustomer: Object,
   totalItems: Number,
-  totalPrice: Number,
+  totalPrice: {
+    type: Number,
+    required: true
+  },
   userData: {
     type: Object,
     required: true
@@ -118,7 +121,7 @@ export default {
   },
   data() {
     return {
-      receivedAmount: this.totalPrice,
+      receivedAmount: 0,
       paymentChoice: '',
       paymentNotes: '',
       loading: false,
@@ -135,69 +138,110 @@ export default {
     },
     async submitPayment() {
       const toast = useToast();
+      const cartStore = useCartStore();
 
-      // Validate payment method
       if (!this.paymentChoice) {
         toast.error('Please select a payment method');
         return;
       }
 
-      const cartStore = useCartStore();
-      this.cart = cartStore.cart;
-
-      if (!this.cart || this.cart.length === 0) {
-        toast.error('Your cart is empty. Please add items to the cart before submitting.');
-        return;
-      }
-
-      const payload = {
-        customer_id: this.activeCustomer.id,
-        total_items: this.totalItems,
-        total_price: this.totalPrice,
-        paying_amount: this.receivedAmount,
-        payment_method: this.paymentChoice,
-        change_return: this.changeReturn,
-        cart: this.cart.map(item => ({
-          product_id: item.id,
-          quantity: item.quantity,
-          unit_cost: item.selling_price,
-          total: (item.selling_price * item.quantity).toFixed(2),
-        })),
-      };
-
       this.loading = true;
 
       try {
-        const response = await axios.post('/api/orders', payload);
-        toast.success('Order submitted successfully!');
+        // Calculate total products (sum of all quantities)
+        const totalProducts = cartStore.cart.reduce((sum, item) => sum + item.quantity, 0);
 
-        if (response.data && response.data.order_id) {
+        const payload = {
+          customer_id: this.activeCustomer.id,
+          total_items: this.totalItems,
+          total_products: totalProducts,
+          total_price: this.totalPrice,
+          paying_amount: parseFloat(this.receivedAmount),
+          payment_method: this.paymentChoice,
+          change_return: parseFloat(this.changeReturn),
+          cart: cartStore.cart.map(item => ({
+            product_id: item.id,
+            quantity: item.quantity,
+            unit_cost: parseFloat(item.selling_price),
+            total: parseFloat((item.selling_price * item.quantity).toFixed(2)),
+          })),
+        };
+
+        console.log('Submitting payload:', payload);
+
+        const response = await axios.post('/api/orders', payload);
+        console.log('Server response:', response.data);
+
+        if (response.data && response.data.status === 'success') {
           this.orderId = response.data.order_id;
-          this.showReceipt = true; // Show the receipt and hide the payment form
+          this.showReceipt = true;
+          cartStore.clearCart();
+          toast.success('Order submitted successfully!');
         } else {
-          toast.error('Order ID missing from response.');
+          console.error('Invalid response structure:', response.data);
+          toast.error('Server returned an invalid response');
         }
       } catch (error) {
-        toast.error('Error submitting your payment. Please try again.');
+        console.error('Order submission error:', error);
+        
+        if (error.response?.status === 422) {
+          const validationErrors = error.response.data.errors;
+          Object.values(validationErrors).forEach(errors => {
+            errors.forEach(error => toast.error(error));
+          });
+        } else {
+          toast.error(
+            error.response?.data?.message || 
+            'Error submitting your payment. Please try again.'
+          );
+        }
       } finally {
         this.loading = false;
       }
     },
     closeReceipt() {
       this.showReceipt = false;
-      this.resetForm(); // Optionally reset the form when closing the receipt
+      this.resetForm();
+      this.$emit('closeModal');
     },
     resetForm() {
       this.receivedAmount = this.totalPrice;
-      this.paymentChoice = 'cash';
+      this.paymentChoice = '';
       this.paymentNotes = '';
       this.changeReturn = 0.00;
+      this.showReceipt = false;
+      this.orderId = null;
     },
+    preparePayload() {
+      const cartStore = useCartStore();
+      
+      return {
+        customer_id: this.activeCustomer.id,
+        total_items: this.totalItems,
+        total_price: this.totalPrice,
+        paying_amount: parseFloat(this.receivedAmount),
+        payment_method: this.paymentChoice,
+        change_return: parseFloat(this.changeReturn),
+        cart: cartStore.cart.map(item => ({
+          product_id: item.id,
+          quantity: item.quantity,
+          unit_cost: parseFloat(item.selling_price),
+          total: parseFloat((item.selling_price * item.quantity).toFixed(2)),
+        })),
+      };
+    }
   },
   watch: {
+    totalPrice: {
+      immediate: true,
+      handler(newValue) {
+        // Set received amount to total price when component mounts or total price changes
+        this.receivedAmount = newValue;
+      }
+    },
     receivedAmount(newVal) {
       this.changeReturn = (newVal - this.totalPrice).toFixed(2);
-    },
+    }
   },
   computed: {
     isFormValid() {

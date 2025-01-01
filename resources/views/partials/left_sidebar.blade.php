@@ -222,15 +222,15 @@
 
                {{--               @if(Auth::user()->can(' product.all'))--}}
 
-               <li>
+               <!-- <li>
                    <a href="{{route('product.add')}}">Add Product</a>
-               </li>
+               </li> -->
 
                {{--               @endif--}}
 {{--                   @if(Auth::user()->can(' import.product'))--}}
-               <li>
+               <!-- <li>
                   <a href="{{route('import.product')}}">Import Product</a>
-               </li>
+               </li> -->
 {{--                       @endif--}}
            </ul>
    </div>
@@ -259,9 +259,6 @@
 
                {{--               @if(Auth::user()->can(' product.all'))--}}
 
-               <li>
-                   <a href="{{route('purchase.add')}}">Add Purchase</a>
-               </li>
 
                {{--               @endif--}}
            </ul>

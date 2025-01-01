@@ -334,6 +334,21 @@ Route::middleware(['auth'])->group(function () {
 
 Route::get('/purchases/{id}', [PurchaseController::class, 'ViewPurchase'])->name('view.purchase');
 
+Route::middleware(['auth'])->group(function () {
+    // Order Routes
+    Route::controller(OrderController::class)->group(function () {
+        // List all orders page
+        Route::get('/orders', 'AllOrders')->name('all.orders');
+        
+        // Add new order page
+        Route::get('/add/order', 'AddOrder')->name('add.order');
+        
+        // View single order page
+        Route::get('/orders/{id}', 'ViewOrder')->name('view.order');
+    });
+});
+
+
 
 
 

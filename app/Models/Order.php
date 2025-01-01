@@ -2,26 +2,34 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
 {
-    use HasFactory;
+    protected $fillable = [
+        'customer_id',
+        'invoice_no',
+        'order_date',
+        'order_status',
+        'total_products',
+        'sub_total',
+        'vat',
+        'total',
+        'payment_status',
+        'payment_method',
+        'pay',
+        'due'
+    ];
 
-    protected $guarded = [];
-
-    // Define the relationship with OrderDetails
-    public function orderDetails()
+    // Relationship with order details
+    public function order_details()
     {
-        return $this->hasMany(OrderDetails::class, 'order_id', 'id');
+        return $this->hasMany(OrderDetail::class);
     }
 
-    // Define the relationship with Customer (assuming this exists)
+    // Relationship with customer
     public function customer()
     {
-        return $this->belongsTo(Customer::class, 'customer_id', 'id');
+        return $this->belongsTo(Customer::class);
     }
-
-    // You can add other relationships if needed
 }

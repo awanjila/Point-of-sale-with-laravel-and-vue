@@ -13,6 +13,8 @@ class Product extends Model
         'product_name', 
         'category_id', 
         // other fillable fields
+        'product_store',
+        'buying_price'
     ];
 
     public function category()

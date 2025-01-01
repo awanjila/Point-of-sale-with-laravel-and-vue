@@ -237,7 +237,9 @@ class PurchaseController extends Controller
     public function CompletePurchase($id)
     {
         try {
-            $purchase = Purchase::findOrFail($id);
+            DB::beginTransaction();
+
+            $purchase = Purchase::with('items.product')->findOrFail($id);
             
             if ($purchase->status !== 'pending') {
                 return response()->json([
@@ -246,15 +248,38 @@ class PurchaseController extends Controller
                 ], 400);
             }
 
+            // Update each product's stock
+            foreach ($purchase->items as $item) {
+                $product = $item->product;
+                
+                if (!$product) {
+                    throw new \Exception("Product not found for purchase item");
+                }
+
+                // Add the purchased quantity to product_store
+                $product->product_store += $item->quantity;
+                $product->save();
+
+                // Optionally, you might want to update the buying price
+                // $product->buying_price = $item->unit_price;
+                // $product->save();
+            }
+            
+
+            // Mark purchase as completed
             $purchase->update(['status' => 'completed']);
+
+            DB::commit();
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Purchase marked as completed',
+                'message' => 'Purchase completed and stock updated successfully',
                 'purchase' => $purchase
             ]);
 
         } catch (\Exception $e) {
+            DB::rollBack();
+            
             return response()->json([
                 'status' => 'error',
                 'message' => 'Error completing purchase: ' . $e->getMessage()

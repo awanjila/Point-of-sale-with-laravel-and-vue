@@ -4,358 +4,441 @@ namespace App\Http\Controllers\BackOffice;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Models\OrderDetails;
 use App\Models\Product;
-use Carbon\Carbon;
-use Gloudemans\Shoppingcart\Facades\Cart;
+use App\Models\Customer;
 use Illuminate\Http\Request;
-use DB;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-
-
+use Illuminate\Support\Facades\Validator;
 
 class OrderController extends Controller
 {
-    public function FinalInvoice(Request $request){
-
-        $rtotal = $request->total;
-        $rpay = $request->pay;
-
-
-        $mtotal = $rtotal - $rpay;
-
-
-  $data=array();
-  $data['customer_id'] = $request->customer_id;
-  $data['order_date'] = $request->order_date;
-  $data['order_status'] = $request->order_status;
-  $data['total_products'] = $request->total_products;
-  $data['sub_total'] = $request->sub_total;
-  $data['vat'] = $request->vat;
-  $data['invoice_no'] = 'EPOS'.mt_rand(10000000,99999999);
-  $data['total'] = $request->total;
-  $data['payment_status'] = $request->payment_status;
-  $data['pay'] = $request->pay;
-  $data['due'] = $mtotal;
-  $data['created_at'] = Carbon::now();
-
-
-
-
-  $order_id=Order::insertGetId($data);
-  $contents = Cart::content();
-
-  $pdata=array();
-
-  foreach($contents as $content){
-      $pdata['order_id'] = $order_id;
-      $pdata['product_id'] = $content->id;
-      $pdata['quantity'] = $content->qty;
-      $pdata['unit_cost'] = $content->price;
-      $pdata['total'] = $content->total;
-      $pdata['created_at'] = Carbon::now();
-
-      $insert =OrderDetails::insert($pdata);
-  }//endforeach
-
-
-        $notification = array(
-            'message' => 'Order Completed Successfully',
-            'alert-type'=> 'success'
-        );
-
-  return redirect()->route('dashboard')->with($notification);
-
-    } //endmethod
-
-
-    public function PendingOrder(){
-
-      $orders = Order::where('order_status', 'pending')->orderBy('id', 'DESC')->get();
-
-      return view('backoffice.order.pending_orders', compact('orders'));
-    } //end method
-
-    public function OrderDetails($order_id){
-    $order = Order::where('id',$order_id)->first();
-
-    $order_item = OrderDetails::where('order_id', $order_id)->orderBy('id', 'DESC')->get();
-
-    return view('backoffice.order.order_details', compact('order', 'order_item'));
-
-    } //end method
-
-
-    public function OrderStatusUpdate(Request $request)
+    public function index()
     {
-        $order_id = $request->id;
-        $products = OrderDetails::where('order_id', $order_id)->get();
-
-        foreach ($products as $item) {
-            $quantitySold = $item->quantity;
-
-            Product::where('id', $item->product_id)->update([
-                'product_store' => DB::raw('product_store - ' . $quantitySold),
-                'sales_count' => DB::raw('sales_count + ' . $quantitySold)
-            ]);
-        }
-
-        Order::findOrFail($order_id)->update(['order_status' => 'complete']);
-
-        $notification = [
-            'message' => 'Order Done Successfully',
-            'alert-type' => 'success'
-        ];
-
-        return redirect()->route('complete.order')->with($notification);
+        $orders = Order::with(['customer'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+            
+        return view('backoffice.orders.index', compact('orders'));
     }
 
+    public function show($id)
+    {
+        $order = Order::with(['customer', 'order_details.product'])
+            ->findOrFail($id);
+            
+        return view('backoffice.orders.show', compact('order'));
+    }
 
-    public function CompleteOrder(){
-        $orders = Order::where('order_status', 'complete')->orderBy('id', 'DESC')->get();
+    public function destroy($id)
+    {
+        try {
+            DB::beginTransaction();
 
-        return view('backoffice.order.complete_orders', compact('orders'));
+            $order = Order::with('order_details')->findOrFail($id);
 
-    }//endmethod
+            // Restore product quantities
+            foreach ($order->order_details as $detail) {
+                $product = Product::find($detail->product_id);
+                if ($product) {
+                    $product->update([
+                        'quantity' => $product->quantity + $detail->quantity
+                    ]);
+                }
+            }
 
-    public function StockManage(){
-      $product = Product::latest()->get();
-      return view('backoffice.stock.all_stock', compact('product'));
+            // Delete order details and order
+            $order->order_details()->delete();
+            $order->delete();
 
-    }//endmethod
+            DB::commit();
 
+            return redirect()
+                ->route('orders.index')
+                ->with('success', 'Order deleted successfully');
 
-    public function OrderInvoice($id){
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error deleting order: ' . $e->getMessage());
 
-        $order = Order::where('id',$id)->first();
-        $orderItem = OrderDetails::where('order_id', $id)->orderBy('id', 'DESC')->get();
-        $pdf = Pdf::loadView('backoffice.order.order_invoice', compact("order", 'orderItem'))
-            ->setPaper('a5')->setOption([
-            'tempDir' => public_path(),
-            'chroot' => public_path(),
+            return redirect()
+                ->back()
+                ->with('error', 'Error deleting order: ' . $e->getMessage());
+        }
+    }
 
+    public function update(Request $request, $id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $order = Order::with('order_details')->findOrFail($id);
+            $oldStatus = $order->order_status;
+            $newStatus = $request->order_status;
+
+            // Update order status
+            $order->update([
+                'order_status' => $newStatus
             ]);
-        return $pdf->download('invoice.pdf');
-//        return view('backoffice.order.order_details', compact('order', 'order_item'));
-    }//endmethod
 
+            // If status is changed to 'completed', update stock
+            if ($oldStatus !== 'completed' && $newStatus === 'completed') {
+                foreach ($order->order_details as $detail) {
+                    $product = Product::find($detail->product_id);
+                    if ($product) {
+                        if ($product->quantity < $detail->quantity) {
+                            DB::rollBack();
+                            return redirect()
+                                ->back()
+                                ->with('error', "Insufficient stock for product: {$product->name}");
+                        }
 
+                        $product->update([
+                            'quantity' => $product->quantity - $detail->quantity
+                        ]);
+                    }
+                }
+            }
+            // If status is changed from 'completed' to something else, restore stock
+            elseif ($oldStatus === 'completed' && $newStatus !== 'completed') {
+                foreach ($order->order_details as $detail) {
+                    $product = Product::find($detail->product_id);
+                    if ($product) {
+                        $product->update([
+                            'quantity' => $product->quantity + $detail->quantity
+                        ]);
+                    }
+                }
+            }
 
-    ////// Due Methods//////
-    public function PendingDue(){
+            DB::commit();
 
-        $all_due = Order::where('due', '>', '0')->orderBy('id', 'DESC')->get();
+            return redirect()
+                ->back()
+                ->with('success', 'Order status updated successfully');
 
-        return view('backoffice.order.pending_due', compact('all_due'));
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating order: ' . $e->getMessage());
 
-    }//endmethod
+            return redirect()
+                ->back()
+                ->with('error', 'Error updating order: ' . $e->getMessage());
+        }
+    }
 
+    public function ShowOrder($id)
+    {
+        try {
+            $order = Order::with([
+                'customer', 
+                'order_details' => function($query) {
+                    $query->with('product');
+                }
+            ])->findOrFail($id);
 
-    public function OrderDueAjax($id){
+            return response()->json([
+                'status' => 'success',
+                'order' => $order
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching order details: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Order not found'
+            ], 404);
+        }
+    }
 
-        $order = Order::findOrFail($id);
+    public function StoreOrder(Request $request)
+    {
+        try {
+            // Log incoming request
+            Log::info('Incoming order request:', $request->all());
 
+            // Validate the request
+            $validator = Validator::make($request->all(), [
+                'customer_id' => 'required|exists:customers,id',
+                'total_items' => 'required|numeric|min:1',
+                'total_price' => 'required|numeric|min:0',
+                'paying_amount' => 'required|numeric|min:0',
+                'payment_method' => 'required|string',
+                'change_return' => 'required|numeric',
+                'cart' => 'required|array|min:1',
+            ]);
 
-        return response()->json($order);
-    }//endmethod
+            if ($validator->fails()) {
+                Log::warning('Order validation failed:', $validator->errors()->toArray());
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
 
+            DB::beginTransaction();
 
+            // Create the order
+            $order = Order::create([
+                'customer_id' => $request->customer_id,
+                'invoice_no' => 'INV-' . date('Ymd-His'),
+                'total_products' => $request->total_items,
+                'sub_total' => $request->total_price,
+                'vat' => round($request->total_price * 0.16, 2),
+                'total' => round($request->total_price),
+                'payment_method' => $request->payment_method,
+                'pay' => $request->paying_amount,
+                'due' => round($request->total_price * 1.16, 2) - $request->paying_amount,
+                'order_date' => now(),
+                'order_status' => 'pending' // Set initial status as pending
+            ]);
 
-    public function UpdateDue(Request $request){
+            // Log the created order
+            Log::info('Order created:', $order->toArray());
 
-        $order_id = $request->id;
-        $due_amount = $request->due;
-        $pay_amount =$request->pay;
+            // Process cart items
+            foreach ($request->cart as $item) {
+                // Create order detail
+                $orderDetail = $order->order_details()->create([
+                    'product_id' => $item['product_id'],
+                    'quantity' => $item['quantity'],
+                    'unit_cost' => $item['unit_cost'],
+                    'total' => $item['total']
+                ]);
+            }
 
-        $all_order = Order::findOrfail($order_id);
+            DB::commit();
 
-        $maindue =$all_order->due;
-        $mainpay =$all_order->pay;
+            // Fetch the complete order with relationships
+            $completeOrder = Order::with(['customer', 'order_details.product'])
+                ->findOrFail($order->id);
 
-
-        $paid_due = $maindue - $due_amount;
-
-        $paid_pay = $mainpay + $pay_amount;
-
-        Order::findOrFail($order_id)->update([
-            'due' => $paid_due,
-            'pay' => $paid_pay,
-        ]);
-
-
-        $notification = array(
-            'message' => 'Due Updated Successfully',
-            'alert-type'=> 'success'
-        );
-
-        return redirect()->back()->with($notification);
-
-
-
-
-    }//endmethod
-
-
-    ///////////////////////////////////////////// Sales /////////////////////////
-    public function TodaysSales(){
-        $date =date('d-F-Y');
-
-//        dd($date);
-        $today_sales = Order::where('order_date', $date)->get();
-        return view('backoffice.order.today_sales', compact('today_sales'));
-
-
-
-    } //endmethod
-
-
-
-    public function SalesReport(Request $request){
-
-        $this->data['start_date'] = $request->get('from_date', date('Y-m-d'));
-        $this->data['to_date'] = $request->get('to_date', date('Y-m-d'));
-
-         $this->data['sales'] = OrderDetails::select('products.product_name', 'order_details.quantity', 'order_details.unit_cost', 'order_details.total', 'orders.invoice_no', 'orders.order_date')
-            ->join('orders', 'order_details.order_id', '=', 'orders.id')
-            ->join('products', 'order_details.product_id', '=', 'products.id')
-           ->whereBetween('orders.created_at', [$this->data['start_date'], $this->data['to_date']])
-            ->get();
-
-           return view('backoffice.pages.reports.sales', $this->data);
-
-    } //endmethod
-
-
-
-    public function createOrder(Request $request)
-{
-    // Begin Transaction
-    DB::beginTransaction();
-
-    try {
-        // Validate incoming request data
-        $request->validate([
-            'customer_id' => 'required|integer|exists:customers,id',
-            'total_items' => 'required|integer',
-            'total_price' => 'required|numeric',
-            'paying_amount' => 'required|numeric',
-            'cart' => 'required|array',
-            'cart.*.product_id' => 'required|integer|exists:products,id',
-            'cart.*.quantity' => 'required|integer|min:1',
-            'cart.*.unit_cost' => 'required|numeric',
-        ]);
-
-        // Create the order
-        $order = Order::create([
-            'customer_id' => $request->customer_id,
-            'order_date' => now(),
-            'order_status' => 'pending', // Default order status
-            'total_products' => $request->total_items, // Total number of products
-            'sub_total' => $request->total_price, // Subtotal is the total payable
-            'total' => $request->total_payable ?? $request->total_price, // Allow flexibility for future use
-            'vat' => 0, // Default VAT (0 by default, can update in future)
-            'payment_status' => 'pending', // Payment status (can be updated later)
-            'pay' => $request->paying_amount,
-            'due' => $request->total_price - $request->paying_amount, // Calculate due amount
-           'payment_method' => $request->payment_method,
-            'invoice_no' => strtoupper(uniqid('INV')) // Generate a random invoice number
-        ]);
-
-        // Create order details for each product in the cart
-        foreach ($request->cart as $item) {
-            OrderDetails::create([
+            // Return success response
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Order created successfully',
                 'order_id' => $order->id,
-                'product_id' => $item['product_id'],
-                'quantity' => $item['quantity'],
-                'unit_cost' => $item['unit_cost'],
-                'total' => $item['quantity'] * $item['unit_cost'], // Calculate total cost
-            ]);
+                'order' => $completeOrder
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Order creation failed: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error creating order: ' . $e->getMessage()
+            ], 500);
         }
+    }//endmethod
 
-        // Commit the transaction
-        DB::commit();
+    public function GetOrders()
+    {
+        try {
+            // Fetch orders with customer relationship, ordered by most recent first
+            $orders = Order::with('customer')
+                ->orderBy('created_at', 'desc')
+                ->get();
 
-        // Include invoice_no in the response
-        return response()->json([
-            'success' => true,
-            'message' => 'Order created successfully',
-            'order_id' => $order->id,
-            'invoice_no' => $order->invoice_no, // Include the invoice number here
-        ], 201);
+            // Get default currency from settings (or use a default)
+            $currency = 'KES';
 
-    } catch (\Exception $e) {
-        // Rollback the transaction
-        DB::rollBack();
+            return response()->json([
+                'status' => 'success',
+                'orders' => $orders,
+                'currency' => $currency
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching orders: ' . $e->getMessage());
 
-        // Log the error
-        Log::error('Order creation failed: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to retrieve orders',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }//endmethod
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Order creation failed: ' . $e->getMessage(),
-        ], 500);
+    public function ViewOrder($id)
+    {
+        try {
+            $order = Order::with(['customer', 'order_details.product'])
+                ->findOrFail($id);
+                
+            if (request()->expectsJson()) {
+                return response()->json($order);
+            }
+            
+            return view('backoffice.order.view_order', compact('id'));
+        } catch (\Exception $e) {
+            Log::error('Error in ViewOrder method: ' . $e->getMessage());
+            
+            if (request()->expectsJson()) {
+                return response()->json(['error' => 'Order not found'], 404);
+            }
+            
+            return redirect()->route('all.orders')
+                ->with('error', 'Unable to find the specified order');
+        }
+    }//endmethod
+
+    public function DeleteOrder($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $order = Order::with('order_details')->findOrFail($id);
+
+            // Restore product quantities
+            foreach ($order->order_details as $detail) {
+                $product = Product::find($detail->product_id);
+                if ($product) {
+                    $product->update([
+                        'quantity' => $product->quantity + $detail->quantity
+                    ]);
+                }
+            }
+
+            // Delete order details and order
+            $order->order_details()->delete();
+            $order->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Order deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error deleting order: ' . $e->getMessage());
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error deleting order: ' . $e->getMessage()
+            ], 500);
+        }
     }
-}//endmethod
 
-public function getOrderById($id)
-{
-    // Fetch the order with the given ID
-    $order = Order::find($id);
+    public function CompleteOrder($id)
+    {
+        try {
+            DB::beginTransaction();
 
-    if (!$order) {
-        return response()->json(['error' => 'Order not found'], 404);
+            $order = Order::with('order_details')->findOrFail($id);
+
+            // Check if order is already completed
+            if ($order->order_status === 'completed') {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Order is already completed'
+                ], 400);
+            }
+
+            // Track stock changes for reporting
+            $stockDetails = [];
+
+            // Update product quantities
+            foreach ($order->order_details as $detail) {
+                $product = Product::find($detail->product_id);
+                if ($product) {
+                    // Detailed product investigation
+                    $productData = Product::where('id', $detail->product_id)->first();
+                    
+                    Log::error('Detailed Product Investigation', [
+                        'product_id' => $detail->product_id,
+                        'product_exists' => $product ? 'Yes' : 'No',
+                        'product_data' => $productData ? $productData->toArray() : 'No data found',
+                        'database_record' => DB::table('products')
+                            ->where('id', $detail->product_id)
+                            ->first()
+                    ]);
+
+                    // Use product_store if quantity is null
+                    $currentStock = $product->quantity ?? $product->product_store ?? 0;
+
+                    // Log detailed product information for debugging
+                    Log::info('Product Stock Check', [
+                        'product_id' => $detail->product_id,
+                        'product_name' => $product->name ?? 'Unknown',
+                        'current_quantity' => $product->quantity,
+                        'current_product_store' => $product->product_store,
+                        'calculated_stock' => $currentStock,
+                        'order_quantity' => $detail->quantity
+                    ]);
+
+                    $originalStock = $currentStock;
+                    
+                    // Ensure sufficient stock
+                    if ($currentStock < $detail->quantity) {
+                        throw new \Exception(sprintf(
+                            "Insufficient stock for product ID %d: %s (Available: %d, Required: %d)", 
+                            $detail->product_id,
+                            $product->name ?? 'Unknown Product', 
+                            $currentStock, 
+                            $detail->quantity
+                        ));
+                    }
+
+                    // Calculate new stock
+                    $newStock = $currentStock - $detail->quantity;
+
+                    // Update product with both quantity and product_store
+                    $updateData = [
+                        'quantity' => $newStock,
+                        'product_store' => $newStock
+                    ];
+
+                    // Attempt to update
+                    $updateResult = $product->update($updateData);
+
+                    // Log update attempt
+                    Log::info('Stock Update Attempt', [
+                        'product_id' => $detail->product_id,
+                        'update_data' => $updateData,
+                        'update_successful' => $updateResult
+                    ]);
+
+                    // Log stock changes
+                    $stockDetails[] = [
+                        'product_id' => $detail->product_id,
+                        'product_name' => $product->name ?? 'Unknown',
+                        'original_stock' => $originalStock,
+                        'new_stock' => $newStock,
+                        'reduced_by' => $detail->quantity
+                    ];
+                } else {
+                    Log::error('Product not found', [
+                        'product_id' => $detail->product_id,
+                        'order_id' => $order->id
+                    ]);
+                }
+            }
+
+            // Update order status
+            $order->update([
+                'order_status' => 'completed'
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Order completed successfully',
+                'stockDetails' => $stockDetails
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error completing order: ' . $e->getMessage());
+            Log::error('Exception Trace: ' . $e->getTraceAsString());
+
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
-
-    // Return the order with the id in the data object
-    return response()->json([
-        'success' => true,
-        'message' => 'Order created successfully',
-        'data' => [ // Wrap the id in a data object
-            'id' => $order->id,
-            // Include other order details if necessary
-        ],
-    ], 201);
-}//endmethod
-
-public function getOrderDetailsById($id)
-{
-    // Fetch the order along with customer and order details (cart items)
-    $order = Order::with('customer', 'orderDetails.product')->find($id);
-
-    if (!$order) {
-        return response()->json(['error' => 'Order not found'], 404);
-    }
-
-    // Return detailed order information including customer and cart details
-    return response()->json([
-        'success' => true,
-        'message' => 'Order details fetched successfully',
-        'data' => [
-            'id' => $order->id,
-            'invoice_no' => $order->invoice_no,
-            'total' => $order->total,
-            'vat' => $order->vat,
-            'customer' => [
-                'name' => $order->customer->name,
-                'email' => $order->customer->email,
-                // Add more customer details as needed
-            ],
-            'order_date' => $order->created_at->format('Y-m-d'),
-            'order_status' => $order->status,
-            'cart' => $order->orderDetails->map(function ($item) {
-                return [
-                    'product_name' => $item->product->product_name, // Fetch product name from the Product relation
-                    'quantity' => $item->quantity,           // Fetch quantity from the OrderDetails table
-                    'unit_cost' => $item->unit_cost,        // Fetch unit price from OrderDetails
-                    'total' => $item->quantity * $item->unit_cost // Calculate total for the item
-                ];
-            }),
-        ]
-    ], 200);
-}//endmethod
-
-
-
-
 }

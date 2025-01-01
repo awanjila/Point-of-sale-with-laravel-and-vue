@@ -11,16 +11,14 @@ class Setting extends Model
         'business_email',
         'business_phone',
         'business_address',
-        'tax_percentage',
-        'currency',
-        'till_number',
+        'logo_path',
         'receipt_header',
-        'receipt_footer',
-        'logo_path'
+        'receipt_footer'
     ];
 
-    // Optional: Cast certain fields
-    protected $casts = [
-        'tax_percentage' => 'float'
-    ];
+    // Singleton pattern method to get settings
+    public static function getSettings()
+    {
+        return self::first() ?? new self();
+    }
 }
