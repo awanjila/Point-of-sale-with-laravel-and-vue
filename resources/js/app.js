@@ -35,6 +35,9 @@ import PurchaseListComponent from './components/purchase/PurchaseListComponent.v
 import ViewPurchaseComponent from './components/purchase/ViewPurchaseComponent.vue'
 import OrderListComponent from './components/order/OrderListComponent.vue'
 import ViewOrderComponent from './components/order/ViewOrderComponent.vue'
+import NotFoundComponent from './components/errors/NotFoundComponent.vue'
+import AccessDeniedComponent from './components/errors/AccessDeniedComponent.vue'
+import SalesReportComponent from './components/sales/SalesReportComponent.vue'
 
 // Export Vue and related libraries globally
 // window.Vue = {
@@ -62,6 +65,9 @@ const app = createApp({
     ViewPurchaseComponent,
     OrderListComponent,
     ViewOrderComponent,
+    NotFoundComponent,
+    AccessDeniedComponent,
+    SalesReportComponent
   }
 });
 
@@ -100,3 +106,8 @@ const token = document.head.querySelector('meta[name="csrf-token"]');
 if (token) {
     window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token.content;
 }
+
+// Register component
+app.component('not-found-component', NotFoundComponent)
+app.component('access-denied-component', AccessDeniedComponent)
+app.component('sales-report-component', SalesReportComponent)

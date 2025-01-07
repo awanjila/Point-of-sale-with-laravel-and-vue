@@ -42,7 +42,7 @@
                                         <th>Customer</th>
                                         <th>Total Products</th>
                                         <th>Sub Total</th>
-                                        <th>VAT</th>
+                                        <!-- <th>VAT</th> -->
                                         <th>Total</th>
                                         <th>Payment Status</th>
                                         <th>Order Status</th>
@@ -58,7 +58,7 @@
                                         <td>{{ order.customer?.name || 'Walk-in Customer' }}</td>
                                         <td>{{ order.total_products }}</td>
                                         <td>{{ currency }}{{ formatNumber(order.sub_total) }}</td>
-                                        <td>{{ currency }}{{ formatNumber(order.vat) }}</td>
+                                        <!-- <td>{{ currency }}{{ formatNumber(order.vat) }}</td> -->
                                         <td>{{ currency }}{{ formatNumber(order.total) }}</td>
                                         <td>
                                             <span :class="getPaymentStatusBadge(order.payment_status)">
@@ -192,7 +192,7 @@ export default {
                 // Show success message with stock details
                 if (response.data.stockDetails) {
                     const stockMessages = response.data.stockDetails.map(detail => 
-                        `${detail.product}: ${detail.original_stock} → ${detail.new_stock} (-${detail.reduced_by})`
+                        `${detail.product_name}: ${detail.original_stock} → ${detail.new_stock} (-${detail.reduced_by})`
                     );
                     
                     this.toast.success(

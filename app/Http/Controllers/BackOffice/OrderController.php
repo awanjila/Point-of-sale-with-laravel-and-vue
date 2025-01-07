@@ -132,14 +132,13 @@ class OrderController extends Controller
         try {
             $order = Order::with([
                 'customer', 
-                'order_details' => function($query) {
-                    $query->with('product');
-                }
+                'order_details.product'
             ])->findOrFail($id);
 
             return response()->json([
                 'status' => 'success',
-                'order' => $order
+                'order' => $order,
+                'currency' => 'KES'
             ]);
         } catch (\Exception $e) {
             Log::error('Error fetching order details: ' . $e->getMessage());
@@ -404,7 +403,7 @@ class OrderController extends Controller
                     // Log stock changes
                     $stockDetails[] = [
                         'product_id' => $detail->product_id,
-                        'product_name' => $product->name ?? 'Unknown',
+                        'product_name' => $product->product_name ?? 'Unknown',
                         'original_stock' => $originalStock,
                         'new_stock' => $newStock,
                         'reduced_by' => $detail->quantity
@@ -440,5 +439,16 @@ class OrderController extends Controller
                 'message' => $e->getMessage()
             ], 500);
         }
-    }
+    }//endmethod
+
+    public function AllOrders(){
+        $orders = Order::latest()->get();
+        return view('backoffice.order.all_orders',compact('orders'));
+    }//endmethod
+
+
+    public function SalesReport(){
+        // pass
+    return view('backoffice.sales.salesreport');
+    }//endmethod
 }

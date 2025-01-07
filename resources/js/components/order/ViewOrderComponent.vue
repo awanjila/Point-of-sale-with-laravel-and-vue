@@ -92,9 +92,9 @@
                                     </thead>
                                     <tbody>
                                         <tr v-for="item in order.order_details" :key="item.id">
-                                            <td>{{ item.product?.name }}</td>
+                                            <td>{{ item.product ? item.product.product_name : 'Product Not Found' }}</td>
                                             <td>{{ item.quantity }}</td>
-                                            <td>{{ currency }}{{ formatNumber(item.unit_cost) }}</td>
+                                            <td>{{ currency }}{{ formatNumber(item.product.selling_price) }}</td>
                                             <td>{{ currency }}{{ formatNumber(item.total) }}</td>
                                         </tr>
                                     </tbody>
@@ -157,6 +157,10 @@ export default {
                 const response = await axios.get(`/api/orders/${this.orderId}`);
                 this.order = response.data.order;
                 this.currency = response.data.currency;
+                
+                // Add this for debugging
+                console.log('Order details:', this.order);
+                console.log('Order details with products:', this.order.order_details);
             } catch (error) {
                 this.toast.error('Error fetching order details');
                 console.error(error);

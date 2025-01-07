@@ -11,6 +11,7 @@ use App\Http\Controllers\BackOffice\SettingController;
 use App\Http\Controllers\BackOffice\SupplierController;
 use App\Http\Controllers\BackOffice\ProductController;
 use App\Http\Controllers\BackOffice\PurchaseController;
+use App\Http\Controllers\BackOffice\ReportsController;
 
 
 
@@ -55,6 +56,8 @@ Route::post('/settings', [SettingController::class, 'updateSettings']);
         // Store new order
         Route::post('/orders', 'StoreOrder');
     });
+
+    Route::get('/sales-report', [ReportsController::class, 'index']);
 
 
 
