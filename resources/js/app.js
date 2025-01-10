@@ -38,6 +38,7 @@ import ViewOrderComponent from './components/order/ViewOrderComponent.vue'
 import NotFoundComponent from './components/errors/NotFoundComponent.vue'
 import AccessDeniedComponent from './components/errors/AccessDeniedComponent.vue'
 import SalesReportComponent from './components/sales/SalesReportComponent.vue'
+import PurchaseReportComponent from './components/purchase/PurchaseReportComponent.vue'
 
 // Export Vue and related libraries globally
 // window.Vue = {
@@ -67,7 +68,8 @@ const app = createApp({
     ViewOrderComponent,
     NotFoundComponent,
     AccessDeniedComponent,
-    SalesReportComponent
+    SalesReportComponent,
+    PurchaseReportComponent
   }
 });
 
@@ -111,3 +113,4 @@ if (token) {
 app.component('not-found-component', NotFoundComponent)
 app.component('access-denied-component', AccessDeniedComponent)
 app.component('sales-report-component', SalesReportComponent)
+app.component('purchase-report-component', PurchaseReportComponent)

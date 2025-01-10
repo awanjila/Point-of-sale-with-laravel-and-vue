@@ -32,5 +32,11 @@
                 {{ $slot }}
             </main>
         </div>
+
+        <script>
+            window.Laravel = {!! json_encode([
+                'user' => Auth::user()
+            ]) !!};
+        </script>
     </body>
 </html>

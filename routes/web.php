@@ -18,6 +18,7 @@ use App\Http\Controllers\BackOffice\RoleController;
 use App\Http\Controllers\BackOffice\PrinterController;
 use App\Http\Controllers\BackOffice\CartController;
 use App\Http\Controllers\BackOffice\SettingController;
+use App\Http\Controllers\BackOffice\ReportsController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -347,6 +348,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/orders/{id}', 'ViewOrder')->name('view.order');
     });
 });
+
+Route::get('/purchase/report', [ReportsController::class, 'PurchaseReport'])->name('purchase.report');
 
 
 

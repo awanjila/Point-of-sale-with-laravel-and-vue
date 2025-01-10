@@ -89,7 +89,15 @@
             break;
     }
     @endif
+
+    
 </script>
+
+<script>
+            window.Laravel = {!! json_encode([
+                'user' => Auth::user()
+            ]) !!};
+        </script>
 
 @routes
 

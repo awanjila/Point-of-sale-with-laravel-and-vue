@@ -321,7 +321,7 @@
                     <div class="collapse" id="reportsMenu">
                         <ul class="nav-second-level">
                             <li><a href="{{route('sales.report')}}"><i class="fas fa-chart-line"></i> Sales Report</a></li>
-                            <li><a href="#"><i class="fas fa-chart-pie"></i> Purchase Report</a></li>
+                            <li><a href="{{route('purchase.report')}}"><i class="fas fa-chart-pie"></i> Purchase Report</a></li>
                             <li><a href="#"><i class="fas fa-boxes"></i> Stock Report</a></li>
                             <li><a href="expense/report"><i class="fas fa-file-invoice-dollar"></i> Expense Report</a></li>
                         </ul>
