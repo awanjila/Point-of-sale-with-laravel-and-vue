@@ -4,8 +4,9 @@ namespace App\Http\Controllers\BackOffice;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
-use Intervention\Image\Facades\Image;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+
 class CustomerController extends Controller
 {
     public function AllCustomer(){
@@ -155,30 +156,54 @@ public function EditCustomer($id){
             // Store new customer
     public function store(Request $request)
     {
-        // Validate the request
-        $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:customers',
-            'phone' => 'required|string|max:15',
-            'address' => 'nullable|string',
-            'location' => 'nullable|string',
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:customers,email',
+                'phone' => 'required|string|max:255',
+                'address' => 'nullable|string',
+                'location' => 'nullable|string',
+                'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            ]);
 
-        // Create a new customer in the database
-        $customer = Customer::create([
-            'name' => $validatedData['name'],
-            'email' => $validatedData['email'],
-            'phone' => $validatedData['phone'],
-            'address' => $validatedData['address'] ?? null,
-            'location' => $validatedData['location'] ?? null,
-            'photo'=> 'image',
-        ]);
+            // Handle photo upload
+            $photoPath = null;
+            if ($request->hasFile('photo')) {
+                $photo = $request->file('photo');
+                $filename = Str::uuid() . '.' . $photo->getClientOriginalExtension();
+                $photoPath = $photo->storeAs('upload/customers', $filename, 'public');
+            }
 
-        // Return a success response
-        return response()->json([
-            'message' => 'Customer added successfully',
-            'customer' => $customer
-        ], 201);
+            $customer = Customer::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'phone' => $validated['phone'],
+                'address' => $validated['address'] ?? null,
+                'location' => $validated['location'] ?? null,
+                'photo' => $photoPath ?? 'upload/customers/default.png' // Provide a default photo path
+            ]);
+
+            return response()->json([
+                'message' => 'Customer created successfully',
+                'customer' => $customer
+            ], 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            // Delete uploaded file if customer creation fails
+            if (isset($photoPath) && $photoPath) {
+                Storage::disk('public')->delete($photoPath);
+            }
+            
+            return response()->json([
+                'message' => 'Failed to create customer',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }//endmethod
 }
 

@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 use Intervention\Image\Facades\Image;
 
@@ -157,4 +159,59 @@ class SupplierController extends Controller
         return response()->json($suppliers);
 
     }//endmethod
+
+    public function store(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:suppliers,email',
+                'phone' => 'required|string|max:255',
+                'company' => 'required|string|max:255',
+                'type' => 'nullable|string|max:255',
+                'address' => 'nullable|string',
+                'location' => 'nullable|string',
+                'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            ]);
+
+            // Handle photo upload
+            $photoPath = null;
+            if ($request->hasFile('photo')) {
+                $photo = $request->file('photo');
+                $filename = Str::uuid() . '.' . $photo->getClientOriginalExtension();
+                $photoPath = $photo->storeAs('upload/suppliers', $filename, 'public');
+            }
+
+            $supplier = Supplier::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'phone' => $validated['phone'],
+                'company' => $validated['company'],
+                'type' => $validated['type'] ?? null,
+                'address' => $validated['address'] ?? null,
+                'location' => $validated['location'] ?? null,
+                'photo' => $photoPath ?? 'upload/suppliers/default.png'
+            ]);
+
+            return response()->json([
+                'message' => 'Supplier created successfully',
+                'supplier' => $supplier
+            ], 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            if (isset($photoPath) && $photoPath) {
+                Storage::disk('public')->delete($photoPath);
+            }
+            
+            return response()->json([
+                'message' => 'Failed to create supplier',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

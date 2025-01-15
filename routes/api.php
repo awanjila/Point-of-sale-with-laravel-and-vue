@@ -58,6 +58,13 @@ Route::post('/settings', [SettingController::class, 'updateSettings']);
     });
 
     Route::get('/sales-report', [ReportsController::class, 'index']);
+    Route::get('/purchase-report-api', [ReportsController::class, 'purchaseReportAPi']);
+    Route::post('/suppliers', [SupplierController::class, 'store']);
+
+    Route::post('/products', [ProductController::class, 'store']);
+
+
+    Route::get('/categories', App\Http\Controllers\BackOffice\CategoryController::class);
 
 
 

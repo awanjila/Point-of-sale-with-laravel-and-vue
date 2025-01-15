@@ -13,6 +13,8 @@ use Haruncpi\LaravelIdGenerator\IdGenerator;
 use App\Exports\ProductExport;
 use App\Imports\ProductImport;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 
 class ProductController extends Controller
@@ -232,5 +234,65 @@ public function index(){
     return response()->json($products);
 
 }//endmethod
+
+public function store(Request $request)
+{
+    try {
+        $validated = $request->validate([
+            'product_name' => 'required|string|max:255',
+            'category_id' => 'required|integer',
+            'supplier_id' => 'required|integer',
+            'product_code' => 'required|string',
+            'buying_price' => 'nullable|string',
+            'selling_price' => 'nullable|string',
+            'buying_date' => 'nullable|string',
+            'expire_date' => 'nullable|string',
+            'product_store' => 'nullable|string',
+            'product_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ]);
+
+        // Handle image upload
+        $imagePath = null;
+        if ($request->hasFile('product_image')) {
+            $image = $request->file('product_image');
+            $filename = Str::uuid() . '.' . $image->getClientOriginalExtension();
+            $imagePath = $image->storeAs('upload/products', $filename, 'public');
+        }
+
+        $product = Product::create([
+            'product_name' => $validated['product_name'],
+            'category_id' => $validated['category_id'],
+            'supplier_id' => $validated['supplier_id'],
+            'product_code' => $validated['product_code'],
+            'buying_price' => $validated['buying_price'] ?? null,
+            'selling_price' => $validated['selling_price'] ?? null,
+            'buying_date' => $validated['buying_date'] ?? null,
+            'expire_date' => $validated['expire_date'] ?? null,
+            'product_store' => $validated['product_store'] ?? null,
+            'product_image' => $imagePath ?? 'upload/products/default.png',
+            'sales_count' => '0' // Initialize as string to match migration
+        ]);
+
+        return response()->json([
+            'message' => 'Product created successfully',
+            'product' => $product
+        ], 201);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        if (isset($imagePath) && $imagePath) {
+            Storage::disk('public')->delete($imagePath);
+        }
+        
+        return response()->json([
+            'message' => 'Failed to create product',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
 
 }

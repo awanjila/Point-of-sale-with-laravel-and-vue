@@ -3,28 +3,49 @@
     <div class="cart-content">
       <!-- Customer Dropdown with Search -->
       <div class="customer-search">
-        <input
-          type="text"
-          v-model="customerSearch"
-          placeholder="Search customers..."
-          class="form-control"
-        />
-
-        <!-- Customer Dropdown -->
-        <select v-model="activeCustomer" class="form-select">
-          <option 
-            v-for="customer in filteredCustomers" 
-            :key="customer.id" 
-            :value="customer"
+        <div class="customer-header">
+          <div class="search-container">
+            <input
+              type="text"
+              v-model="customerSearch"
+              placeholder="Search customers..."
+              class="form-control"
+              @input="handleCustomerSearch"
+            />
+            <div v-if="showCustomerResults" class="search-results">
+              <div 
+                v-for="customer in filteredCustomers" 
+                :key="customer.id"
+                class="customer-result-item"
+                @click="selectCustomer(customer)"
+              >
+                {{ customer.name }}
+              </div>
+            </div>
+          </div>
+          <button 
+            class="btn btn-primary add-customer-btn"
+            @click="showAddCustomerModal = true"
           >
-            {{ customer.name }}
-          </option>
-        </select>
+            <i class="fas fa-plus"></i> Add
+          </button>
+        </div>
 
-        <!-- Display Selected Customer -->
-        <!-- <div v-if="activeCustomer">
-          <h4>Selected Customer: {{ activeCustomer.name }}</h4>
-        </div> -->
+        <!-- Customer Status Indicator -->
+        <div class="customer-status">
+          <template v-if="activeCustomer">
+            <div class="selected-customer">
+              <i class="fas fa-user"></i>
+              <span>{{ activeCustomer.name }}</span>
+            </div>
+          </template>
+          <template v-else>
+            <div class="no-customer-warning">
+              <i class="fas fa-exclamation-circle"></i>
+              <span>No customer selected</span>
+            </div>
+          </template>
+        </div>
       </div>
 
       <!-- Cart Items Table -->
@@ -123,6 +144,12 @@
   :userData="userData"
 />
     
+    <!-- Add Customer Modal -->
+    <AddCustomerModal
+      :showModal="showAddCustomerModal"
+      @closeModal="showAddCustomerModal = false"
+      @customerAdded="handleCustomerAdded"
+    />
   </div>
 </template>
 
@@ -131,6 +158,7 @@ import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
 import { useCartStore } from './stores/cart'; // Cart store import
 import PaymentForm from './PaymentForm.vue'; // Import the PaymentForm component
+import AddCustomerModal from './customers/AddCustomerModal.vue';
 
 defineProps({
   userData: {
@@ -223,6 +251,37 @@ const decreaseQuantity = (item) => {
     cartStore.updateItemQuantity(item.id, item.quantity);
   }
 };
+
+// Add these to your existing script
+const showAddCustomerModal = ref(false);
+
+const handleCustomerAdded = (newCustomer) => {
+  customers.value.push(newCustomer);
+  activeCustomer.value = newCustomer;
+  showAddCustomerModal.value = false;
+};
+
+const showCustomerResults = ref(false);
+
+const handleCustomerSearch = () => {
+  showCustomerResults.value = customerSearch.value.length > 0;
+};
+
+const selectCustomer = (customer) => {
+  activeCustomer.value = customer;
+  customerSearch.value = '';
+  showCustomerResults.value = false;
+};
+
+// Close search results when clicking outside
+onMounted(() => {
+  document.addEventListener('click', (e) => {
+    const searchContainer = document.querySelector('.search-container');
+    if (searchContainer && !searchContainer.contains(e.target)) {
+      showCustomerResults.value = false;
+    }
+  });
+});
 </script>
 
 <style scoped>
@@ -247,7 +306,7 @@ const decreaseQuantity = (item) => {
 
 /* Customer search area */
 .customer-search {
-  margin-bottom: 5px;
+  margin-bottom: 1rem;
 }
 
 /* Cart Items Container */
@@ -360,10 +419,10 @@ const decreaseQuantity = (item) => {
   transition: all 0.3s ease;
 }
 
-.btn:hover {
+/* .btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
+} */
 
 /* Button styles */
 .btn-warning {
@@ -612,5 +671,104 @@ const decreaseQuantity = (item) => {
   .cart-items-container {
     max-height: calc(100vh - 300px); /* Adjust for smaller screens */
   }
+}
+
+/* Add these styles to your existing styles */
+.customer-header {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.add-customer-btn {
+  white-space: nowrap;
+  padding: 0.375rem 0.75rem;
+}
+
+.customer-search input {
+  flex: 1;
+}
+
+.customer-header {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.search-container {
+  position: relative;
+  flex: 1;
+}
+
+.search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.customer-result-item {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.customer-result-item:hover {
+  background-color: #f8f9fa;
+}
+
+.add-customer-btn {
+  background-color: #0d6efd;
+  color: white;
+  border: none;
+  padding: 0.375rem 0.75rem;
+  white-space: nowrap;
+  transition: none;
+}
+
+.add-customer-btn:hover {
+  background-color: #0d6efd;
+}
+
+.customer-status {
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-top: 8px;
+}
+
+.selected-customer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #198754;
+  font-weight: 500;
+}
+
+.no-customer-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #dc3545;
+  font-weight: 500;
+}
+
+.selected-customer i,
+.no-customer-warning i {
+  font-size: 1.1rem;
+}
+
+/* Remove any hover effects from the add button */
+.add-customer-btn:hover,
+.add-customer-btn:focus,
+.add-customer-btn:active {
+  background-color: #0d6efd !important;
+  border-color: #0d6efd !important;
+  box-shadow: none !important;
 }
 </style>

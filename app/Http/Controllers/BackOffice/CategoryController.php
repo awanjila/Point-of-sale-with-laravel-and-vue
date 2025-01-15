@@ -87,19 +87,13 @@ class CategoryController extends Controller
 
     public function __invoke()
     {
-        $categories = Category::all();
+        $categories = Category::all()->map(function($category) {
+            return [
+                'id' => $category->id,
+                'name' => $category->category_name,
+            ];
+        });
         
-        \Log::info('Categories Retrieved', [
-            'count' => $categories->count(),
-            'categories' => $categories->map(function($cat) {
-                return [
-                    'id' => $cat->id,
-                    'name' => $cat->category_name,
-                    'type_of_id' => gettype($cat->id)
-                ];
-            })
-        ]);
-
         return response()->json($categories);
     }
 }
