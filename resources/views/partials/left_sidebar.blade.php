@@ -200,6 +200,80 @@
                 </li>
                 @endif
 
+                <!-- Add this after the Orders Management section -->
+                
+                <li>
+                    <a href="#salesMenu" data-bs-toggle="collapse">
+                        <i class="fas fa-cash-register"></i>
+                        <span> Sales Management </span>
+                        <i class="fas fa-chevron-down ms-auto"></i>
+                    </a>
+                    <div class="collapse" id="salesMenu">
+                        <ul class="nav-second-level">
+                            <!-- Sales -->
+                            <li>
+                                <a href="#salesListMenu" data-bs-toggle="collapse">
+                                    <i class="fas fa-receipt"></i> Sales
+                                    <i class="fas fa-chevron-down ms-auto"></i>
+                                </a>
+                                <div class="collapse" id="salesListMenu">
+                                    <ul class="nav-third-level">
+                                        <li><a href="all/sales"><i class="fas fa-list"></i> All Sales</a></li>
+                                        <li><a href="add/sales"><i class="fas fa-plus"></i> Add Sale</a></li>
+                                        <li><a href="pending/sales"><i class="fas fa-clock"></i> Pending Sales</a></li>
+                                        <li><a href="completed/sales"><i class="fas fa-check"></i> Completed Sales</a></li>
+                                    </ul>
+                                </div>
+                            </li>
+
+                            <!-- Sales Returns -->
+                            <li>
+                                <a href="#salesReturnsMenu" data-bs-toggle="collapse">
+                                    <i class="fas fa-undo"></i> Sales Returns
+                                    <i class="fas fa-chevron-down ms-auto"></i>
+                                </a>
+                                <div class="collapse" id="salesReturnsMenu">
+                                    <ul class="nav-third-level">
+                                        <li><a href="all/sales/returns"><i class="fas fa-list"></i> All Returns</a></li>
+                                        <li><a href="add/sales/return"><i class="fas fa-plus"></i> Add Return</a></li>
+                                    </ul>
+                                </div>
+                            </li>
+
+                            <!-- Sales Payments -->
+                            <li>
+                                <a href="#salesPaymentsMenu" data-bs-toggle="collapse">
+                                    <i class="fas fa-money-bill-wave"></i> Sales Payments
+                                    <i class="fas fa-chevron-down ms-auto"></i>
+                                </a>
+                                <div class="collapse" id="salesPaymentsMenu">
+                                    <ul class="nav-third-level">
+                                        <li><a href="sales/payments"><i class="fas fa-list"></i> All Payments</a></li>
+                                        <li><a href="add/sales/payment"><i class="fas fa-plus"></i> Add Payment</a></li>
+                                        <li><a href="pending/sales/payments"><i class="fas fa-clock"></i> Pending Payments</a></li>
+                                    </ul>
+                                </div>
+                            </li>
+
+                            <!-- Sales Reports -->
+                            <li>
+                                <a href="#salesReportsMenu" data-bs-toggle="collapse">
+                                    <i class="fas fa-chart-line"></i> Sales Reports
+                                    <i class="fas fa-chevron-down ms-auto"></i>
+                                </a>
+                                <div class="collapse" id="salesReportsMenu">
+                                    <ul class="nav-third-level">
+                                        <li><a href="daily/sales"><i class="fas fa-calendar-day"></i> Daily Sales</a></li>
+                                        <li><a href="monthly/sales"><i class="fas fa-calendar-alt"></i> Monthly Sales</a></li>
+                                        <li><a href="yearly/sales"><i class="fas fa-calendar"></i> Yearly Sales</a></li>
+                                    </ul>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+               
+
                 <!-- Personnel Management -->
                 @if(Auth::user()->can('employee.menu') || Auth::user()->can('supplier.menu') || Auth::user()->can('customer.menu'))
                 <li class="menu-title mt-2">Personnel</li>

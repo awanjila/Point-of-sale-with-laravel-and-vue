@@ -7,6 +7,7 @@ use App\Models\Employee;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Intervention\Image\Facades\Image;
+use Illuminate\Support\Facades\Log;
 
 class EmployeeController extends Controller
 {
@@ -144,6 +145,31 @@ class EmployeeController extends Controller
         return redirect()->back()->with($notification);
 
     }//endmethod
+
+    /**
+     * Get employees who can be delivery persons
+     */
+    public function getDeliveryPersons()
+    {
+        try {
+            $deliveryPersons = Employee::select('id', 'name', 'phone', 'email')
+                ->orderBy('name')
+                ->get();
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $deliveryPersons
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error fetching delivery persons: ' . $e->getMessage());
+            
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error fetching delivery persons'
+            ], 500);
+        }
+    }
 }
 
 

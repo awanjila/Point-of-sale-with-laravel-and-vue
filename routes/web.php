@@ -19,7 +19,7 @@ use App\Http\Controllers\BackOffice\PrinterController;
 use App\Http\Controllers\BackOffice\CartController;
 use App\Http\Controllers\BackOffice\SettingController;
 use App\Http\Controllers\BackOffice\ReportsController;
-
+use App\Http\Controllers\BackOffice\SalesController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -350,6 +350,17 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::get('/purchase/report', [ReportsController::class, 'PurchaseReport'])->name('purchase.report');
+
+
+// Sales Routes
+Route::middleware(['auth'])->group(function () {
+    Route::controller(SalesController::class)->group(function () {
+        Route::get('sales', 'AllSales')->name('all.sales');
+        Route::get('/add/sales', 'AddSales')->name('sales.add');
+        Route::post('/store-sales', 'StoreSales')->name('store.sales');
+    });
+});
+
 
 
 

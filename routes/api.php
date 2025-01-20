@@ -12,6 +12,7 @@ use App\Http\Controllers\BackOffice\SupplierController;
 use App\Http\Controllers\BackOffice\ProductController;
 use App\Http\Controllers\BackOffice\PurchaseController;
 use App\Http\Controllers\BackOffice\ReportsController;
+use App\Http\Controllers\BackOffice\EmployeeController;
 
 
 
@@ -65,6 +66,8 @@ Route::post('/settings', [SettingController::class, 'updateSettings']);
 
 
     Route::get('/categories', App\Http\Controllers\BackOffice\CategoryController::class);
+
+    Route::get('/delivery-persons', [EmployeeController::class, 'getDeliveryPersons']);
 
 
 
