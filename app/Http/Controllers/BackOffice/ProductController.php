@@ -15,6 +15,7 @@ use App\Imports\ProductImport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 
 class ProductController extends Controller
@@ -291,6 +292,35 @@ public function store(Request $request)
         return response()->json([
             'message' => 'Failed to create product',
             'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
+public function search(Request $request)
+{
+    try {
+        $query = $request->get('q', '');
+        
+        $products = Product::where(function($q) use ($query) {
+            $q->where('product_name', 'LIKE', "%{$query}%")
+              ->orWhere('product_code', 'LIKE', "%{$query}%");
+        })
+        ->select('id', 'product_name', 'selling_price', 'product_store')
+        ->orderBy('product_name')
+        ->limit(10)
+        ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $products
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('Error searching products: ' . $e->getMessage());
+        
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Error searching products'
         ], 500);
     }
 }

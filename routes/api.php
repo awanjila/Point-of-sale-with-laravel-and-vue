@@ -13,6 +13,7 @@ use App\Http\Controllers\BackOffice\ProductController;
 use App\Http\Controllers\BackOffice\PurchaseController;
 use App\Http\Controllers\BackOffice\ReportsController;
 use App\Http\Controllers\BackOffice\EmployeeController;
+use App\Http\Controllers\BackOffice\SaleController;
 
 
 
@@ -68,6 +69,24 @@ Route::post('/settings', [SettingController::class, 'updateSettings']);
     Route::get('/categories', App\Http\Controllers\BackOffice\CategoryController::class);
 
     Route::get('/delivery-persons', [EmployeeController::class, 'getDeliveryPersons']);
+
+    // Update the existing products route to handle search
+    Route::get('/products/search', [ProductController::class, 'search']);
+
+    Route::get('/customers/search', [CustomerController::class, 'search']);
+
+// Sales Routes
+Route::prefix('sales')->group(function () {
+    Route::get('/', [SaleController::class, 'index']);
+    Route::post('/', [SaleController::class, 'store']);
+    Route::get('/{sale}', [SaleController::class, 'show']);
+    Route::patch('/{sale}/status', [SaleController::class, 'updateStatus']);
+    Route::delete('/{sale}', [SaleController::class, 'destroy']);
+    
+    // Document routes
+    Route::post('{sale}/documents', [SaleController::class, 'uploadDocuments']);
+    Route::delete('documents/{document}', [SaleController::class, 'deleteDocument']);
+});
 
 
 

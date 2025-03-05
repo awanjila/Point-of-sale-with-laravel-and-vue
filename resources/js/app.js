@@ -37,6 +37,8 @@ import AccessDeniedComponent from './components/errors/AccessDeniedComponent.vue
 import SalesReportComponent from './components/sales/SalesReportComponent.vue';
 import PurchaseReportComponent from './components/purchase/PurchaseReportComponent.vue';
 import AddSalesComponent from './components/sales/AddSalesComponent.vue';
+import SalesListComponent from './components/sales/SalesListComponent.vue';
+import ViewSaleComponent from './components/sales/ViewSaleComponent.vue';
 
 // Create Vue app
 const app = createApp({
@@ -57,7 +59,9 @@ const app = createApp({
         AccessDeniedComponent,
         SalesReportComponent,
         PurchaseReportComponent,
-        AddSalesComponent
+        AddSalesComponent,
+        SalesListComponent,
+        ViewSaleComponent
     }
 });
 

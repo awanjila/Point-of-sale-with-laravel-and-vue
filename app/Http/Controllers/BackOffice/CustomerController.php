@@ -6,6 +6,7 @@ use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class CustomerController extends Controller
 {
@@ -205,6 +206,40 @@ public function EditCustomer($id){
             ], 500);
         }
     }//endmethod
+
+    public function search(Request $request)
+    {
+        try {
+            $query = $request->get('q', '');
+            
+            \Log::info('Customer search query:', ['query' => $query]); // Add logging
+            
+            $customers = Customer::where(function($q) use ($query) {
+                $q->where('name', 'LIKE', "%{$query}%")
+                  ->orWhere('phone', 'LIKE', "%{$query}%")
+                  ->orWhere('email', 'LIKE', "%{$query}%");
+            })
+            ->select('id', 'name', 'phone', 'email')
+            ->orderBy('name')
+            ->limit(10)
+            ->get();
+
+            \Log::info('Customer search results:', ['count' => $customers->count()]); // Add logging
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $customers
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error searching customers: ' . $e->getMessage());
+            
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error searching customers'
+            ], 500);
+        }
+    }
 }
 
 

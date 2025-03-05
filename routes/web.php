@@ -20,6 +20,7 @@ use App\Http\Controllers\BackOffice\CartController;
 use App\Http\Controllers\BackOffice\SettingController;
 use App\Http\Controllers\BackOffice\ReportsController;
 use App\Http\Controllers\BackOffice\SalesController;
+use App\Http\Controllers\BackOffice\SaleController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -360,6 +361,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/store-sales', 'StoreSales')->name('store.sales');
     });
 });
+
+Route::get('/sales', [SaleController::class, 'ListSales'])->name('sales.list');
+Route::get('/sales/{id}', [SaleController::class, 'viewSale'])->name('sales.view');
 
 
 

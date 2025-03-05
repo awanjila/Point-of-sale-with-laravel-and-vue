@@ -218,10 +218,9 @@
                                 </a>
                                 <div class="collapse" id="salesListMenu">
                                     <ul class="nav-third-level">
-                                        <li><a href="all/sales"><i class="fas fa-list"></i> All Sales</a></li>
-                                        <li><a href="add/sales"><i class="fas fa-plus"></i> Add Sale</a></li>
-                                        <li><a href="pending/sales"><i class="fas fa-clock"></i> Pending Sales</a></li>
-                                        <li><a href="completed/sales"><i class="fas fa-check"></i> Completed Sales</a></li>
+                                        <li><a href="{{route('sales.list')}}"><i class="fas fa-list"></i> All Sales</a></li>
+                                        <li><a href="/pending/sales"><i class="fas fa-clock"></i> Pending Sales</a></li>
+                                        <li><a href="/completed/sales"><i class="fas fa-check"></i> Completed Sales</a></li>
                                     </ul>
                                 </div>
                             </li>

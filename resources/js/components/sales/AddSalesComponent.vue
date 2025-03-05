@@ -53,6 +53,7 @@
                             <div class="row mb-4">
                                 <div class="col-md-6">
                                     <label class="form-label">Customer</label>
+                                    <div class="customer-search">
                                     <div class="input-group">
                                         <input
                                             type="text"
@@ -66,11 +67,11 @@
                                             class="btn btn-primary"
                                             @click="showAddCustomerModal = true"
                                         >
-                                            <i class="fas fa-plus"></i>
+                                            <i class="fas fa-plus"></i> Add New
                                         </button>
                                     </div>
                                     <!-- Customer Search Results -->
-                                    <div v-if="showCustomerResults" class="search-results">
+                                        <div v-if="showCustomerResults && filteredCustomers.length > 0" class="search-results">
                                         <div 
                                             v-for="customer in filteredCustomers" 
                                             :key="customer.id"
@@ -78,6 +79,7 @@
                                             @click="selectCustomer(customer)"
                                         >
                                             {{ customer.name }} - {{ customer.phone }}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -135,7 +137,7 @@
                                         <tbody>
                                             <tr v-for="(item, index) in sale.items" :key="index">
                                                 <td>
-                                                    <div class="product-select">
+                                                    <div class="product-search">
                                                         <input
                                                             type="text"
                                                             class="form-control"
@@ -143,15 +145,19 @@
                                                             @input="searchProducts(index)"
                                                             placeholder="Search products..."
                                                         >
-                                                        <!-- Product Search Results -->
-                                                        <div v-if="item.showResults" class="search-results">
+                                                        <!-- Search Results Dropdown -->
+                                                        <div v-if="item.showResults && item.filteredProducts.length > 0" class="search-results">
                                                             <div 
                                                                 v-for="product in item.filteredProducts" 
                                                                 :key="product.id"
                                                                 class="search-item"
                                                                 @click="selectProduct(product, index)"
                                                             >
-                                                                {{ product.name }} - {{ formatCurrency(product.selling_price) }}
+                                                                <div>{{ product.product_name }}</div>
+                                                                <div class="small text-muted">
+                                                                    Price: {{ formatCurrency(product.selling_price) }} | 
+                                                                    Stock: {{ product.product_store }}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -161,7 +167,9 @@
                                                         type="number" 
                                                         class="form-control" 
                                                         v-model="item.quantity"
-                                                        @input="calculateItemTotal(index)"
+                                                        @input="validateQuantity(index)"
+                                                        :max="item.available_quantity"
+                                                        min="1"
                                                     >
                                                 </td>
                                                 <td>
@@ -212,6 +220,82 @@
                                 >
                                     Add Product
                                 </button>
+                            </div>
+
+                            <!-- Add this after the Products Section -->
+                            <div class="payment-section mb-4">
+                                <h5 class="mb-3">Payment Details</h5>
+                                <div class="row">
+                                    <!-- Payment Summary -->
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <span>Subtotal:</span>
+                                                    <strong>{{ formatCurrency(calculateSubtotal) }}</strong>
+                                                </div>
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <span>Tax ({{ sale.tax_rate }}%):</span>
+                                                    <strong>{{ formatCurrency(calculateTotalTax) }}</strong>
+                                                </div>
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <span>Discount:</span>
+                                                    <strong>{{ formatCurrency(calculateTotalDiscount) }}</strong>
+                                                </div>
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <span>Shipping:</span>
+                                                    <strong>{{ formatCurrency(sale.shipping_charges) }}</strong>
+                                                </div>
+                                                <hr>
+                                                <div class="d-flex justify-content-between">
+                                                    <h6>Total:</h6>
+                                                    <h6>{{ formatCurrency(calculateTotal) }}</h6>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Payment Input -->
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Payment Method</label>
+                                                    <select v-model="sale.payment_method" class="form-select">
+                                                        <option value="cash">Cash</option>
+                                                        <option value="bank_transfer">Bank Transfer</option>
+                                                        <option value="cheque">Cheque</option>
+                                                        <option value="mobile_money">Mobile Money</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label class="form-label">Paid Amount</label>
+                                                    <input 
+                                                        type="number" 
+                                                        class="form-control" 
+                                                        v-model="sale.paid_amount"
+                                                        @input="calculateDueAmount"
+                                                    >
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label class="form-label">Reference No.</label>
+                                                    <input 
+                                                        type="text" 
+                                                        class="form-control" 
+                                                        v-model="sale.payment_reference"
+                                                        placeholder="Cheque/Transaction reference"
+                                                    >
+                                                </div>
+
+                                                <div class="alert" :class="dueAmountAlertClass">
+                                                    <strong>Due Amount: {{ formatCurrency(sale.due_amount) }}</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Totals Section -->
@@ -326,17 +410,24 @@
         </div>
 
         <!-- Add Customer Modal -->
-        <div class="modal fade" id="addCustomerModal" tabindex="-1" v-if="showAddCustomerModal">
-            <!-- Modal content will be added in the next part -->
-        </div>
+        <add-customer-modal
+            v-if="showAddCustomerModal"
+            :show-modal="showAddCustomerModal"
+            @close-modal="showAddCustomerModal = false"
+            @customer-added="handleCustomerAdded"
+        />
     </div>
 </template>
 
 <script>
 import { useToast } from 'vue-toastification';
 import axios from 'axios';
+import AddCustomerModal from '../customers/AddCustomerModal.vue';
 
 export default {
+    components: {
+        AddCustomerModal
+    },
     setup() {
         const toast = useToast();
         return { toast };
@@ -345,9 +436,9 @@ export default {
     data() {
         return {
             sale: {
-                sale_no: '',  // Will be set in created()
+                sale_no: '',
                 sale_date: new Date().toISOString().split('T')[0],
-                sale_type: 'final', // final, draft, quotation, proforma
+                sale_type: 'final',
                 status: 'pending',
                 payment_terms: 'immediate',
                 customer_id: null,
@@ -355,16 +446,21 @@ export default {
                 documents: [],
                 subtotal: 0,
                 total_discount: 0,
-                discount_type: 'fixed', // or 'percentage'
+                discount_type: 'fixed',
                 discount_amount: 0,
-                tax_rate: 16,
+                tax_rate: 0, // Set default tax rate
                 tax_amount: 0,
                 shipping_charges: 0,
                 total: 0,
                 shipping_address: '',
                 delivered_to: '',
                 delivery_person_id: '',
-                notes: ''
+                notes: '',
+                payment_method: 'cash',
+                paid_amount: 0,
+                due_amount: 0,
+                payment_reference: '',
+                payment_status: 'unpaid'
             },
             saleTypes: [
                 { value: 'final', label: 'Final' },
@@ -387,22 +483,69 @@ export default {
         saleNo() {
             const date = new Date();
             return `SALE-${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+        },
+        calculateSubtotal() {
+            return this.sale.items.reduce((total, item) => {
+                return total + (item.quantity * item.unit_price);
+            }, 0);
+        },
+        calculateTotalTax() {
+            return this.sale.items.reduce((total, item) => {
+                return total + parseFloat(item.tax_amount || 0);
+            }, 0);
+        },
+        calculateTotalDiscount() {
+            return this.sale.items.reduce((total, item) => {
+                const itemTotal = item.quantity * item.unit_price;
+                const discount = item.discount_type === 'percentage' 
+                    ? (itemTotal * item.discount / 100) 
+                    : item.discount;
+                return total + discount;
+            }, 0);
+        },
+        calculateTotal() {
+            return this.calculateSubtotal 
+                + this.calculateTotalTax 
+                - this.calculateTotalDiscount 
+                + parseFloat(this.sale.shipping_charges || 0);
+        },
+        dueAmountAlertClass() {
+            const dueAmount = this.sale.due_amount;
+            if (dueAmount <= 0) return 'alert-success';
+            if (dueAmount < this.calculateTotal) return 'alert-warning';
+            return 'alert-danger';
         }
     },
 
     methods: {
         async searchCustomers() {
+            console.log('Search triggered:', this.customerSearch); // Debug log
+
             if (this.customerSearch.length < 2) {
                 this.showCustomerResults = false;
+                this.filteredCustomers = [];
                 return;
             }
 
             try {
-                const response = await axios.get(`/api/customers/search?q=${this.customerSearch}`);
-                this.filteredCustomers = response.data;
-                this.showCustomerResults = true;
+                const response = await axios.get('/api/customers/search', {
+                    params: {
+                        q: this.customerSearch
+                    }
+                });
+
+                console.log('Search response:', response.data); // Debug log
+
+                if (response.data.status === 'success') {
+                    this.filteredCustomers = response.data.data;
+                    this.showCustomerResults = true;
+                    console.log('Filtered customers:', this.filteredCustomers); // Debug log
+                }
             } catch (error) {
+                console.error('Error searching customers:', error);
                 this.toast.error('Error searching customers');
+                this.showCustomerResults = false;
+                this.filteredCustomers = [];
             }
         },
 
@@ -423,7 +566,7 @@ export default {
         },
 
         addNewItem() {
-            this.sale.items.push({
+            const newItem = {
                 product_id: null,
                 productSearch: '',
                 showResults: false,
@@ -432,67 +575,122 @@ export default {
                 unit_price: 0,
                 discount: 0,
                 discount_type: 'fixed',
-                tax: 0,
+                tax_amount: 0,
                 total: 0
-            });
+            };
+            
+            console.log('Adding new item:', newItem); // Debug log
+            this.sale.items.push(newItem);
         },
 
         async searchProducts(index) {
             const item = this.sale.items[index];
+            console.log('Starting product search for:', item.productSearch);
+
             if (item.productSearch.length < 2) {
                 item.showResults = false;
+                item.filteredProducts = [];
                 return;
             }
 
             try {
-                const response = await axios.get(`/api/products/search?q=${item.productSearch}`);
-                item.filteredProducts = response.data;
-                item.showResults = true;
+                const response = await axios.get(`/api/products/search`, {
+                    params: {
+                        q: item.productSearch
+                    }
+                });
+
+                console.log('Product search response:', response.data);
+
+                if (response.data.status === 'success') {
+                    item.filteredProducts = response.data.data;
+                    item.showResults = true;
+                } else {
+                    throw new Error(response.data.message || 'Error searching products');
+                }
             } catch (error) {
+                console.error('Error searching products:', error);
                 this.toast.error('Error searching products');
+                item.showResults = false;
+                item.filteredProducts = [];
             }
         },
 
         selectProduct(product, index) {
+            console.log('Selecting product:', product);
+            
             const item = this.sale.items[index];
-            item.product_id = product.id;
-            item.productSearch = product.name;
-            item.unit_price = product.selling_price;
+            
+            // Ensure all required fields are set
+            item.product_id = parseInt(product.id);  // Ensure it's a number
+            item.productSearch = product.product_name;
+            item.unit_price = parseFloat(product.selling_price);
+            item.available_quantity = parseInt(product.product_store);
             item.showResults = false;
+            
+            console.log('Updated sale item:', item);
+
+            // Stock warnings
+            if (product.product_store <= 0) {
+                this.toast.warning(`Warning: ${product.product_name} is out of stock!`);
+            } else if (product.product_store < 5) {
+                this.toast.info(`Low stock alert: Only ${product.product_store} units available for ${product.product_name}`);
+            }
+
+            // Recalculate totals
             this.calculateItemTotal(index);
+        },
+
+        calculateItemTax(item) {
+            if (!item.unit_price || !item.quantity) return 0;
+            
+            const subtotal = item.quantity * item.unit_price;
+            const discountAmount = item.discount_type === 'percentage' 
+                ? (subtotal * item.discount / 100) 
+                : (item.discount || 0);
+            
+            const taxableAmount = subtotal - discountAmount;
+            return (taxableAmount * (this.sale.tax_rate || 0)) / 100;
         },
 
         calculateItemTotal(index) {
             const item = this.sale.items[index];
-            const subtotal = item.quantity * item.unit_price;
-            const discount = item.discount || 0;
-            const discountAmount = item.discount_type === 'percentage' 
-                ? (subtotal * discount / 100) 
-                : discount;
+            console.log('Calculating total for item:', item);
             
-            const taxableAmount = subtotal - discountAmount;
-            const tax = (taxableAmount * (this.sale.tax_rate || 0)) / 100;
-            
-            item.total = taxableAmount + tax;
-            this.calculateTotal();
-        },
-
-        calculateTotal() {
-            this.sale.subtotal = this.sale.items.reduce((sum, item) => sum + item.total, 0);
-            
-            // Calculate discount
-            if (this.sale.discount_type === 'percentage') {
-                this.sale.total_discount = (this.sale.subtotal * this.sale.discount_amount) / 100;
-            } else {
-                this.sale.total_discount = this.sale.discount_amount;
+            // Validate required fields
+            if (!item.product_id || !item.unit_price || !item.quantity) {
+                console.warn('Missing required fields for calculation:', {
+                    product_id: item.product_id,
+                    unit_price: item.unit_price,
+                    quantity: item.quantity
+                });
+                return;
             }
 
-            // Calculate tax
-            const taxableAmount = this.sale.subtotal - this.sale.total_discount;
-            this.sale.tax_amount = (taxableAmount * this.sale.tax_rate) / 100;
+            const subtotal = parseFloat(item.quantity) * parseFloat(item.unit_price);
+            const discountAmount = item.discount_type === 'percentage' 
+                ? (subtotal * parseFloat(item.discount || 0) / 100) 
+                : parseFloat(item.discount || 0);
+            
+            item.tax_amount = this.calculateItemTax(item);
+            item.total = subtotal - discountAmount + item.tax_amount;
 
-            // Calculate total
-            this.sale.total = taxableAmount + this.sale.tax_amount + (this.sale.shipping_charges || 0);
+            console.log('Calculation results:', {
+                subtotal,
+                discountAmount,
+                tax_amount: item.tax_amount,
+                total: item.total
+            });
+
+            this.updateSaleTotals();
+        },
+
+        updateSaleTotals() {
+            this.sale.subtotal = this.calculateSubtotal;
+            this.sale.tax_amount = this.calculateTotalTax;
+            this.sale.total_discount = this.calculateTotalDiscount;
+            this.sale.total = this.calculateTotal;
+            this.calculateDueAmount();
         },
 
         calculateTax(item) {
@@ -514,16 +712,43 @@ export default {
 
         async submitSale() {
             try {
+                // Validate items before submission
+                const invalidItems = this.sale.items.filter(item => !item.product_id);
+                if (invalidItems.length > 0) {
+                    this.toast.error('Please select products for all items');
+                    console.error('Invalid items:', invalidItems);
+                    return;
+                }
+
                 this.loading = true;
+
+                // Calculate all totals before submission
+                const saleData = {
+                    ...this.sale,
+                    subtotal: this.calculateSubtotal,
+                    tax_amount: this.calculateTotalTax,
+                    total_discount: this.calculateTotalDiscount,
+                    total: this.calculateTotal,
+                    items: this.sale.items.map(item => ({
+                        product_id: item.product_id,
+                        quantity: item.quantity,
+                        unit_price: item.unit_price,
+                        discount_type: item.discount_type,
+                        discount: item.discount || 0,
+                        tax_amount: parseFloat(item.tax_amount || 0),
+                        total: item.total
+                    }))
+                };
+
                 const formData = new FormData();
+                formData.append('sale_data', JSON.stringify(saleData));
                 
-                // Append sale data
-                formData.append('sale_data', JSON.stringify(this.sale));
-                
-                // Append documents
-                this.sale.documents.forEach((doc, index) => {
-                    formData.append(`documents[${index}]`, doc);
-                });
+                // Append documents if any
+                if (this.sale.documents.length > 0) {
+                    this.sale.documents.forEach((doc, index) => {
+                        formData.append(`documents[${index}]`, doc);
+                    });
+                }
 
                 const response = await axios.post('/api/sales', formData, {
                     headers: {
@@ -531,9 +756,15 @@ export default {
                     }
                 });
 
-                this.toast.success('Sale created successfully');
-                this.$router.push('/sales');
+                if (response.data.status === 'success') {
+                    this.toast.success('Sale created successfully');
+                    // Redirect to sales list page
+                    window.location.href = '/sales';  // Using window.location for full page reload
+                } else {
+                    throw new Error(response.data.message || 'Error creating sale');
+                }
             } catch (error) {
+                console.error('Sale submission error:', error);
                 this.toast.error(error.response?.data?.message || 'Error creating sale');
             } finally {
                 this.loading = false;
@@ -550,6 +781,41 @@ export default {
                 style: 'currency',
                 currency: 'KES'
             }).format(amount);
+        },
+
+        validateQuantity(index) {
+            const item = this.sale.items[index];
+            if (!item.product_id) return;
+
+            if (item.quantity > item.available_quantity) {
+                this.toast.error(`Only ${item.available_quantity} units available`);
+                item.quantity = item.available_quantity;
+            }
+
+            this.calculateItemTotal(index);
+        },
+
+        handleCustomerAdded(customer) {
+            this.selectedCustomer = customer;
+            this.sale.customer_id = customer.id;
+            this.customerSearch = customer.name;
+            this.showAddCustomerModal = false;
+            this.toast.success('Customer added successfully');
+        },
+
+        calculateDueAmount() {
+            const total = this.calculateTotal;
+            const paid = parseFloat(this.sale.paid_amount || 0);
+            this.sale.due_amount = total - paid;
+
+            // Update payment status
+            if (this.sale.due_amount <= 0) {
+                this.sale.payment_status = 'paid';
+            } else if (this.sale.paid_amount > 0) {
+                this.sale.payment_status = 'partial';
+            } else {
+                this.sale.payment_status = 'unpaid';
+            }
         }
     },
 
@@ -577,11 +843,7 @@ export default {
 <style scoped>
 .customer-search {
     position: relative;
-    margin-bottom: 0.5rem;
-}
-
-.search-container {
-    position: relative;
+    margin-bottom: 1rem;
 }
 
 .search-results {
@@ -596,5 +858,24 @@ export default {
     overflow-y: auto;
     z-index: 1000;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.search-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+}
+
+.search-item:hover {
+    background-color: #f5f5f5;
+}
+
+.search-item .small {
+    font-size: 0.875em;
+    color: #6c757d;
+}
+
+.product-search {
+    position: relative;
 }
 </style>
